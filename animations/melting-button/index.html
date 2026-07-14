@@ -69,52 +69,52 @@
       }
     }
 
-    /* --- The melt --------------------------------------------------------
-       Press the button and it turns purple, sags, drips, and blurs away.
-       Once melted it's removed from the page — refresh to pour a new one.
-       This is a page experiment, so the purple lives here, not in tokens. */
+    /* --- Shared melt color ---------------------------------------------- */
 
-    :root { --melt: #7c3aed; }
-    [data-theme="dark"] { --melt: #a78bfa; }
+    :root {
+      --melt: #7c3aed;
+    }
 
-    /* Three acts, chained by animation-delay:
-         1. infect — purple creeps down from the top edge, slowly (0–2s)
-         2. drip   — once it reaches the bottom, drops break off (1.7s–3s)
-         3. melt   — the fully infected button quietly fades out (2.6–3.4s)
-       When "melt" ends, the script removes the button. */
+    [data-theme="dark"] {
+      --melt: #a78bfa;
+    }
 
-    .btn.is-melting {
-      position: relative;   /* anchors the drips below */
-      pointer-events: none; /* one melt per button — no double clicks */
+    /* --- Fable 5: preserved baseline ----------------------------------- */
 
-      /* The infection is a purple layer painted ON TOP of the button's own
-         color, pinned to the top edge with a short soft front. Growing its
-         background-size from 0% downward is what makes it "spread". */
-      background-image: linear-gradient(to bottom, var(--melt) 90%, transparent);
+    .melt-button--fable.is-melting {
+      position: relative;
+      pointer-events: none;
+      background-image: linear-gradient(
+        to bottom,
+        var(--melt) 90%,
+        transparent
+      );
       background-repeat: no-repeat;
       background-position: top;
       background-size: 100% 0%;
-
       animation:
         infect 2s ease-in forwards,
         melt 0.8s ease-out 2.6s forwards;
     }
 
     @keyframes infect {
-      /* The button's own color also turns purple at the very end of the
-         sweep, so no pale edges survive under the gradient or the border.
-         140% (not 100%) size lets the soft front travel past the bottom. */
-      70%  { background-color: var(--accent); }
-      100% { background-color: var(--melt); background-size: 100% 140%; }
+      70% {
+        background-color: var(--accent);
+      }
+      100% {
+        background-color: var(--melt);
+        background-size: 100% 140%;
+      }
     }
 
     @keyframes melt {
-      to { opacity: 0; }
+      to {
+        opacity: 0;
+      }
     }
 
-    /* Two purple drops that break off once the infection reaches the bottom */
-    .btn.is-melting::before,
-    .btn.is-melting::after {
+    .melt-button--fable.is-melting::before,
+    .melt-button--fable.is-melting::after {
       content: "";
       position: absolute;
       top: 96%;
@@ -122,25 +122,289 @@
       height: 12px;
       border-radius: 50%;
       background: var(--melt);
-      opacity: 0; /* invisible until their (delayed) animation starts */
+      opacity: 0;
       animation: drip 1.1s ease-in forwards;
     }
 
-    .btn.is-melting::before {
+    .melt-button--fable.is-melting::before {
       left: 22%;
       animation-delay: 1.7s;
     }
 
-    .btn.is-melting::after {
+    .melt-button--fable.is-melting::after {
       left: 64%;
       animation-delay: 2s;
       animation-duration: 0.95s;
     }
 
     @keyframes drip {
-      0%   { transform: translateY(-6px) scale(0.4);      opacity: 1; }
-      70%  { transform: translateY(48px) scale(1, 1.6);   opacity: 1; }
-      100% { transform: translateY(84px) scale(0.7, 1.9); opacity: 0; }
+      0% {
+        opacity: 1;
+        transform: translateY(-6px) scale(0.4);
+      }
+      70% {
+        opacity: 1;
+        transform: translateY(48px) scale(1, 1.6);
+      }
+      100% {
+        opacity: 0;
+        transform: translateY(84px) scale(0.7, 1.9);
+      }
+    }
+
+    /* --- GPT-5.6 Sol: polished liquid shell ---------------------------- */
+
+    .melt-button--sol {
+      position: relative;
+      isolation: isolate;
+      overflow: visible;
+    }
+
+    .melt-button--sol::before {
+      content: "";
+      position: absolute;
+      inset: -1.5px;
+      z-index: 0;
+      border-radius: inherit;
+      background-color: var(--accent);
+      background-image: linear-gradient(
+        to bottom,
+        var(--melt) 0%,
+        var(--melt) 88%,
+        transparent 100%
+      );
+      background-repeat: no-repeat;
+      background-position: top;
+      background-size: 100% 0%;
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: 50% 100%;
+    }
+
+    .sol-label {
+      position: relative;
+      z-index: 2;
+      transform-origin: center;
+    }
+
+    .sol-drop {
+      position: absolute;
+      top: calc(100% - 6px);
+      z-index: 1;
+      width: 6px;
+      height: 11px;
+      border-radius: 48% 52% 62% 58%;
+      background: var(--melt);
+      opacity: 0;
+      pointer-events: none;
+      transform-origin: 50% 0%;
+    }
+
+    .sol-drop-left {
+      left: 25%;
+      width: 7px;
+    }
+
+    .sol-drop-right {
+      right: 21%;
+      width: 5px;
+      height: 9px;
+    }
+
+    .melt-button--sol.is-melting,
+    .melt-button--sol.is-melting:hover,
+    .melt-button--sol.is-melting:active {
+      background-color: transparent;
+      border-color: transparent;
+      pointer-events: none;
+      transform: none;
+      transition: none;
+      animation: sol-lifecycle 2s linear forwards;
+    }
+
+    .melt-button--sol.is-melting::before {
+      animation: sol-shell 2s cubic-bezier(0.2, 0, 0, 1) forwards;
+      will-change: transform, opacity, filter;
+    }
+
+    .melt-button--sol.is-melting .sol-label {
+      animation: sol-label 700ms cubic-bezier(0.2, 0, 0, 1) forwards;
+      will-change: transform, opacity, filter;
+    }
+
+    .melt-button--sol.is-melting .sol-drop-left {
+      animation:
+        sol-drop-left 1s cubic-bezier(0.35, 0, 0.25, 1) 620ms forwards;
+      will-change: transform, opacity, filter;
+    }
+
+    .melt-button--sol.is-melting .sol-drop-right {
+      animation:
+        sol-drop-right 850ms cubic-bezier(0.35, 0, 0.25, 1) 790ms forwards;
+      will-change: transform, opacity, filter;
+    }
+
+    @keyframes sol-lifecycle {
+      from,
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes sol-shell {
+      0% {
+        background-color: var(--accent);
+        background-size: 100% 0%;
+        border-radius: var(--radius-md);
+        filter: blur(0);
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+      }
+      8% {
+        background-size: 100% 14%;
+        transform: translate3d(0, 1px, 0) scale(0.96);
+      }
+      18% {
+        background-color: var(--accent);
+        background-size: 100% 55%;
+        border-radius: 10px 10px 12px 9px;
+        transform: translate3d(0, 2px, 0) scaleX(0.99) scaleY(1.02);
+      }
+      34% {
+        background-color: var(--melt);
+        background-size: 100% 140%;
+        border-radius: 9px 10px 15px 11px;
+        transform: translate3d(0, 4px, 0) scaleX(0.97) scaleY(1.08);
+      }
+      52% {
+        background-color: var(--melt);
+        background-size: 100% 140%;
+        border-radius: 8px 9px 18px 13px;
+        transform: translate3d(-1px, 9px, 0) scaleX(0.9) scaleY(1.15);
+      }
+      68% {
+        border-radius: 8px 10px 17px 14px;
+        filter: blur(0.25px);
+        opacity: 1;
+        transform: translate3d(1px, 17px, 0) scaleX(0.76) scaleY(0.78);
+      }
+      82% {
+        border-radius: 7px 9px 20px 16px;
+        filter: blur(0.9px);
+        opacity: 0.82;
+        transform: translate3d(0, 25px, 0) scaleX(0.5) scaleY(0.4);
+      }
+      100% {
+        background-color: var(--melt);
+        border-radius: 999px;
+        filter: blur(3px);
+        opacity: 0;
+        transform: translate3d(0, 32px, 0) scaleX(0.16) scaleY(0.08);
+      }
+    }
+
+    @keyframes sol-label {
+      0%,
+      20% {
+        filter: blur(0);
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+      32% {
+        filter: blur(0);
+        opacity: 1;
+        transform: translateY(1px) scale(0.96);
+      }
+      64% {
+        filter: blur(0.6px);
+        opacity: 0.62;
+        transform: translateY(2px) scale(0.95);
+      }
+      100% {
+        filter: blur(2px);
+        opacity: 0;
+        transform: translateY(3px) scale(0.94);
+      }
+    }
+
+    @keyframes sol-drop-left {
+      0% {
+        filter: blur(0);
+        opacity: 0;
+        transform: translateY(-4px) scale(0.45, 0.15);
+      }
+      12% {
+        opacity: 1;
+        transform: translateY(-2px) scale(0.55, 0.8);
+      }
+      46% {
+        opacity: 1;
+        transform: translateY(16px) scale(0.7, 1.7);
+      }
+      74% {
+        filter: blur(0.25px);
+        opacity: 0.84;
+        transform: translateY(34px) scale(0.52, 1.15);
+      }
+      100% {
+        filter: blur(1.5px);
+        opacity: 0;
+        transform: translateY(52px) scale(0.25, 0.45);
+      }
+    }
+
+    @keyframes sol-drop-right {
+      0% {
+        filter: blur(0);
+        opacity: 0;
+        transform: translateY(-3px) scale(0.4, 0.2);
+      }
+      14% {
+        opacity: 1;
+        transform: translateY(-1px) scale(0.52, 0.9);
+      }
+      50% {
+        opacity: 1;
+        transform: translateY(13px) scale(0.64, 1.5);
+      }
+      76% {
+        filter: blur(0.2px);
+        opacity: 0.8;
+        transform: translateY(27px) scale(0.48, 1);
+      }
+      100% {
+        filter: blur(1.25px);
+        opacity: 0;
+        transform: translateY(43px) scale(0.22, 0.4);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .melt-button--fable.is-melting {
+        animation-delay: 0ms, 0ms !important;
+        animation-duration: 80ms, 80ms !important;
+      }
+
+      .melt-button--fable.is-melting::before,
+      .melt-button--fable.is-melting::after {
+        animation-delay: 0ms !important;
+        animation-duration: 80ms !important;
+      }
+
+      .melt-button--sol.is-melting,
+      .melt-button--sol.is-melting::before {
+        animation-delay: 0ms !important;
+        animation-duration: 80ms !important;
+      }
+
+      .melt-button--sol.is-melting .sol-label {
+        animation-delay: 0ms !important;
+        animation-duration: 60ms !important;
+      }
+
+      .melt-button--sol.is-melting .sol-drop {
+        display: none;
+      }
     }
   </style>
 </head>
@@ -169,9 +433,19 @@
           class="btn btn-primary btn-md melt-button melt-button--sol"
           type="button"
           data-melt="sol"
-          data-terminal-animation="melt"
-          data-fallback-ms="3600"
-        >Button</button>
+          data-terminal-animation="sol-lifecycle"
+          data-fallback-ms="2200"
+        >
+          <span class="sol-label">Button</span>
+          <span
+            class="sol-drop sol-drop-left"
+            aria-hidden="true"
+          ></span>
+          <span
+            class="sol-drop sol-drop-right"
+            aria-hidden="true"
+          ></span>
+        </button>
       </div>
     </section>
   </main>
