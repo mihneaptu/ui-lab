@@ -28,6 +28,10 @@
       display: grid;
       place-items: center;
       padding: var(--space-8) var(--space-6) var(--space-6);
+      /* The sky doesn't snap to night — the paper crossfades on the
+         morph's own clock, so the world changes WITH the sun, not
+         before it. */
+      transition: background-color 500ms ease;
     }
 
     .sky-specimen {
@@ -52,30 +56,71 @@
       --sky-ease: cubic-bezier(0.65, 0, 0.35, 1);
       --sky-time: 400ms;
 
+      position: relative; /* anchors the dot-grid layer below */
       width: 176px;
       height: 176px;
       display: grid;
       place-items: center;
       color: var(--ink); /* the svg draws with currentColor */
       background-color: var(--surface);
-      background-image: radial-gradient(var(--line) 1px, transparent 1px);
-      background-size: 14px 14px;
       border: 1px solid var(--line);
       border-radius: 50%;
-      box-shadow: var(--shadow-sm);
-      cursor: pointer;
-      transition: border-color var(--speed-color) ease,
-                  box-shadow var(--speed-color) ease,
-                  transform var(--speed-move) ease;
-    }
-
-    .sky-toggle:hover {
-      border-color: var(--line-strong);
+      /* md at rest, not sm: at 176px the chip-sized shadow reads as
+         "pasted on"; a big object needs a shadow that matches its size
+         to look like it's resting on the paper */
       box-shadow: var(--shadow-md);
+      cursor: pointer;
+      /* only the press stays on the fast micro-feedback clock; border,
+         surface, ink, AND shadow all ride the same slow crossfade as
+         the paper. Anything on a faster clock flips to the new theme
+         ahead of the surface and draws attention to itself — the
+         border did exactly that (a bright ring around the still-dark
+         circle), and the shadow bloom on hover reads better slow too:
+         light shifting over an object, not a control lighting up. */
+      transition: transform 180ms cubic-bezier(0.2, 0, 0, 1),
+                  box-shadow 500ms ease,
+                  background-color 500ms ease,
+                  border-color 500ms ease,
+                  color 500ms ease;
     }
 
-    /* Pressing the sky: the whole button gives slightly under the
-       finger, like a physical switch. */
+    /* The dot grid lives on its own layer because a background-image
+       can't transition — the dots were snapping to the new theme while
+       everything else faded. The trick: this layer is a plain solid
+       color (which CAN transition), and a mask punches the dot pattern
+       out of it. The mask never changes; only the color crossfades,
+       on the same 500ms clock as everything else. */
+    .sky-toggle::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background-color: var(--line);
+      -webkit-mask-image: radial-gradient(#000 1px, transparent 1px);
+      -webkit-mask-size: 14px 14px;
+      mask-image: radial-gradient(#000 1px, transparent 1px);
+      mask-size: 14px 14px;
+      transition: background-color 500ms ease;
+      pointer-events: none;
+    }
+
+    /* position: relative lifts the icon above the dot layer (positioned
+       pseudo-elements paint over static children otherwise) */
+    .sky-icon {
+      position: relative;
+    }
+
+    /* Hover: a gentle 2px rise with the shadow deepening one step —
+       the object floating up to meet the cursor, not a control
+       lighting up. (The rise is on a quick 180ms clock; the shadow
+       blooms slowly behind it.) */
+    .sky-toggle:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-2px);
+    }
+
+    /* Pressing the sky: the rise collapses and the button gives
+       slightly under the finger, like a physical switch. */
     .sky-toggle:active {
       transform: scale(0.97);
     }
@@ -100,6 +145,9 @@
     .sky-icon {
       width: 72px;
       height: 72px;
+      /* the sunrise overshoot pokes the ray caps a hair past the
+         viewBox — let them, instead of clipping them flat */
+      overflow: visible;
     }
 
     /* transform-box: view-box makes "center" mean the middle of the
@@ -130,9 +178,14 @@
        This is what lets everything play AT THE SAME TIME: the bite's
        hole sweeps right through the space the right ray is retreating
        from, so the rays must always be one step ahead of it — faster,
-       not earlier, keeps the whole morph simultaneous. */
+       not earlier, keeps the whole morph simultaneous.
+       Their ease has a small overshoot: at sunrise the rays stretch a
+       hair past resting length and settle back — arrival with weight,
+       not interpolation. (Going to the moon the same overshoot lands
+       inside the disc, where nobody sees it.) */
     .rays {
-      transition: transform calc(var(--sky-time) - 80ms) var(--sky-ease) 140ms;
+      transition: transform calc(var(--sky-time) - 80ms)
+                  cubic-bezier(0.34, 1.3, 0.64, 1) 140ms;
     }
 
     /* --- The moon state --------------------------------------------------
@@ -154,8 +207,13 @@
     }
 
     .sky-toggle.is-moon .disc {
-      /* r=6 scaled 1.75x reads as a proper moon; still inside the box. */
+      /* r=6 scaled 1.75x reads as a proper moon; still inside the box.
+         The stretched clock is deliberate: the swell must OUTLAST the
+         bite (which runs 140-540ms), so the crescent is carved out of
+         a body that's visibly still growing — grow-and-carve as one
+         event, not grow, stop, carve. */
       transform: scale(1.75);
+      transition-duration: 600ms;
       transition-delay: 40ms; /* ...the disc swells as they sink in... */
     }
 
@@ -204,9 +262,12 @@
     /* Night falls: the moon releases its stars at the same speed it
        swallows them — they launch while the crescent is still being
        carved, invisible over its flesh, and the sweeping bite uncovers
-       them mid-flight. Staggered so they read as two arrivals. */
+       them mid-flight. Staggered so they read as two arrivals, and on
+       a springy ease so they POP into place — a touch past their spot,
+       then settle, like something small coming to rest. */
     .sky-toggle.is-moon .star {
       transform: none;
+      transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
     }
 
     .sky-toggle.is-moon .star-1 {
@@ -225,6 +286,7 @@
       font-size: var(--text-xs);
       color: var(--ink-muted);
       user-select: none;
+      transition: color 500ms ease; /* rides the paper's crossfade */
     }
   </style>
 </head>
