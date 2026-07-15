@@ -8,10 +8,10 @@ no build step, plain HTML, CSS, and a little vanilla JS.
 
 ## Experiments
 
-- [Melting button](animations/melting-button/index.html): a button that
-  melts on hover, two implementations side by side
-- [Sun to moon](animations/sun-moon/index.html): a sun that morphs into a
-  moon on click, with the rays and stars on springs
+| Experiment | Notes |
+| --- | --- |
+| [Melting button](animations/melting-button/index.html) | A button that melts on hover, two implementations side by side |
+| [Sun to moon](animations/sun-moon/index.html) | A sun that morphs into a moon on click, with the rays and stars on springs |
 
 ## License
 
