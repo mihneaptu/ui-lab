@@ -1,0 +1,153 @@
+/* ==========================================================================
+   tokens.css — the design system
+
+   This file is the single source of truth for every visual decision in
+   the lab. No component file is allowed to invent its own color, spacing,
+   or font size — everything points back here.
+
+   Why this matters: consistency is what makes a design feel "designed".
+   When every gap is pulled from one spacing scale and every color from
+   one palette, pages feel calm and intentional even before you add any
+   decoration. When values are picked ad hoc (13px here, 15px there,
+   five slightly different grays), pages feel messy and nobody can say why.
+
+   THEMING: colors live in two blocks — the light theme in :root, and a
+   dark override in [data-theme="dark"]. Only COLOR tokens change between
+   themes. Spacing, type, shape, and motion are theme-independent, so they
+   are defined once and never repeated.
+   ========================================================================== */
+
+:root {
+
+  /* Tells the browser which theme we're in, so native UI (scrollbars,
+     form controls) matches the page instead of fighting it. */
+  color-scheme: light;
+
+  /* ------------------------------------------------------------------
+     COLOR — light theme
+     A monochrome palette: neutral grays plus one "accent" that is
+     simply near-black. Hierarchy comes from contrast and weight,
+     not from hue.
+     ------------------------------------------------------------------ */
+
+  --paper: #f4f4f3;        /* page background — a soft neutral, not stark white */
+  --surface: #ffffff;      /* cards and specimen stages sit on pure white,
+                              so they read as "raised" above the paper */
+  --ink: #1a1a1a;          /* main text — near-black. Pure #000 on light
+                              backgrounds is harsher than it needs to be */
+  --ink-muted: #6b6b6b;    /* secondary text — still passes contrast on paper */
+  --line: #e4e4e2;         /* hairline borders and the dot grid */
+  --line-strong: #b0b0ad;  /* borders that must be clearly visible
+                              (e.g. the secondary button outline) */
+
+  /* The accent — near-black with a darkness ramp.
+     Interactive elements get DARKER as you press them (hover → active),
+     like a physical button moving away from the light. */
+  --accent: #262626;          /* resting state */
+  --accent-strong: #111111;   /* hover */
+  --accent-deep: #000000;     /* active (pressed) */
+  --accent-soft: #eaeaea;     /* faint tint, for hover on outline/ghost styles */
+  --accent-contrast: #ffffff; /* text ON the accent (primary button label) —
+                                 flips to dark in the dark theme, where the
+                                 accent itself is light */
+
+  /* Shadows are for elevation, not decoration. Soft and barely-there:
+     if you notice the shadow itself, it's too strong. Defined here (not
+     in SHAPE & DEPTH) because they change with the theme. */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
+
+  /* ------------------------------------------------------------------
+     TYPE
+     Three faces, three jobs:
+       display — personality, used sparingly at large sizes
+       body    — quiet and readable, does most of the work
+       mono    — labels, tokens, annotations ("the lab equipment")
+     ------------------------------------------------------------------ */
+
+  --font-display: "Bricolage Grotesque", "Segoe UI", sans-serif;
+  --font-body: "Instrument Sans", "Segoe UI", sans-serif;
+  --font-mono: "Spline Sans Mono", Consolas, monospace;
+
+  /* Type scale — each step is meaningfully bigger than the last.
+     If two sizes are only 1px apart, readers can't tell them apart,
+     so the difference communicates nothing. */
+  --text-xs: 0.8125rem;   /* 13px — annotations, chips */
+  --text-sm: 0.9375rem;   /* 15px — secondary text */
+  --text-md: 1.0625rem;   /* 17px — body */
+  --text-lg: 1.375rem;    /* 22px — section headings */
+  --text-xl: 2rem;        /* 32px — page titles */
+  --text-2xl: 3rem;       /* 48px — the homepage headline */
+
+  /* ------------------------------------------------------------------
+     SPACING
+     One scale, base unit 4px. Every margin, padding, and gap in the lab
+     is one of these values — never 13px, never 22px.
+     ------------------------------------------------------------------ */
+
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+
+  /* ------------------------------------------------------------------
+     SHAPE & DEPTH
+     ------------------------------------------------------------------ */
+
+  --radius-sm: 6px;    /* small controls: chips, swatches */
+  --radius-md: 10px;   /* buttons, notes */
+  --radius-lg: 16px;   /* cards, specimen stages */
+
+  /* ------------------------------------------------------------------
+     MOTION
+     One duration for color changes, one for movement. Fast enough to
+     feel responsive, slow enough to be perceived.
+     ------------------------------------------------------------------ */
+
+  --speed-color: 120ms;
+  --speed-move: 80ms;
+}
+
+/* ==========================================================================
+   DARK THEME
+   Applied when <html data-theme="dark">. A tiny script in each page's
+   <head> sets that attribute from your saved choice (localStorage) or,
+   failing that, your OS preference — so the theme is decided before the
+   first paint and the page never flashes the wrong colors.
+
+   Dark mode is not just "invert everything": surfaces get LIGHTER as
+   they rise (dark paper, lighter cards), and the accent ramp flips —
+   the primary button is light, and pressing it makes it dimmer, which
+   still reads as "moving away from the light".
+   ========================================================================== */
+
+[data-theme="dark"] {
+
+  color-scheme: dark;
+
+  --paper: #121212;        /* the page floor — dark, but not pure black,
+                              so shadows and lifted surfaces still register */
+  --surface: #1c1c1c;      /* cards sit slightly lighter than the paper —
+                              in the dark, "raised" means "catches more light" */
+  --ink: #f2f2f2;          /* near-white text — pure #fff glows harshly
+                              on dark backgrounds */
+  --ink-muted: #a3a3a3;
+  --line: #2a2a2a;
+  --line-strong: #4d4d4d;
+
+  /* The accent ramp, mirrored: light resting state, dimmer as pressed. */
+  --accent: #ececec;
+  --accent-strong: #d6d6d6;
+  --accent-deep: #bfbfbf;
+  --accent-soft: #262626;
+  --accent-contrast: #111111; /* dark label on the light button */
+
+  /* Shadows barely read on dark backgrounds, so they lean a bit heavier */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+}

@@ -1,0 +1,417 @@
+/* ==========================================================================
+   base.css — reset + the lab's shared "chrome"
+
+   Everything here is the gallery itself (header, cards, specimen stages,
+   margin notes). The components being studied live in their own files
+   under components/.
+   ========================================================================== */
+
+/* --- Reset ----------------------------------------------------------------
+   Browsers ship with inconsistent default margins and box models.
+   These four rules give every page the same clean starting point. */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box; /* width includes padding+border — the sane model */
+}
+
+body,
+h1, h2, h3, p, ul, figure {
+  margin: 0; /* we add space back deliberately, from the spacing scale */
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+/* --- Page ---------------------------------------------------------------- */
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-md);
+  line-height: 1.6; /* body text breathes; headings tighten this locally */
+  color: var(--ink);
+  background: var(--paper);
+  -webkit-font-smoothing: antialiased;
+}
+
+.container {
+  max-width: 960px; /* comfortable reading width — full-bleed text is tiring */
+  margin: 0 auto;
+  padding: 0 var(--space-5);
+}
+
+a {
+  color: var(--accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+a:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--accent-soft);
+}
+
+/* --- Header (shared across all lab pages) --------------------------------- */
+
+.lab-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-5) 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.wordmark {
+  /* Flex keeps the three pieces (name, tick, "lab") on one shared
+     baseline even while the last two animate their widths below. */
+  display: inline-flex;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  color: var(--ink);
+  letter-spacing: 0.02em;
+}
+
+/* The wordmark holds three links ("mihneaptu" → GitHub profile, "lab" →
+   home, the hidden cat → the repo) that should read as one quiet mark,
+   so the links inherit the ink color and only reveal themselves with an
+   underline on hover — except the cat, which is a logo, not text. */
+.wordmark a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.wordmark a:not(.octo):hover {
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+/* Hovering the name plays a staged act for the rest of the mark:
+   1. the "/" stands up into a "|" and stays there,
+   2. "lab" slides left INTO the line and is swallowed by it — the link
+      box clips the text at its left edge (right where the line stands),
+      so letters vanish as they reach it and nothing comes out the other
+      side. No fade: the text physically travels out of view.
+   3. then the GitHub mark slides out of the line the opposite way,
+      left to right, into the space "lab" left behind,
+   ending on "mihneaptu | octocat". The ~ sibling selector is what lets
+   the first link style the elements after it; the extra <span> inside
+   the "lab" link is the part that slides while the link stays put as
+   the clipping window, and .octo is the same trick for the logo.
+
+   The durations here are hand-picked, not the token speeds — those are
+   for micro feedback (80–120ms), too fast for a sequence the eye is
+   meant to follow. Each element carries TWO transition rules: the one
+   in its hover selector times the exit, the one in its base selector
+   times the return (so on un-hover everything plays back in reverse
+   order: logo back into the line first, then "lab" slides back out). */
+
+.wordmark .tick {
+  color: var(--accent); /* the one colored character in the wordmark */
+  display: inline-block; /* inline elements can't be transformed */
+  cursor: default; /* decorative glyph — no text I-beam */
+  user-select: none;
+  /* return timing: the line lies back down after the logo is gone */
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1) 0.08s;
+}
+
+.wordmark a.home {
+  max-width: 4ch; /* mono font: wide enough for the resting text */
+  overflow: hidden;
+  /* return timing: the box reopens after the logo has retreated */
+  transition: max-width 0.25s cubic-bezier(0.32, 0.72, 0, 1) 0.12s;
+}
+
+.wordmark a.home span {
+  display: inline-block;
+  /* return timing: the text slides back out of the line last */
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) 0.18s;
+}
+
+/* The logo's clipping window: closed at rest, and its left edge sits
+   right against the line — the same door "lab" leaves through. It's a
+   link to the repo, clickable once revealed; the resets keep it looking
+   like part of the wordmark rather than a control. */
+.wordmark .octo {
+  align-self: center; /* the logo is centered on the text, not baseline-set */
+  background: none;
+  border: 0;
+  padding: 0;
+  color: inherit; /* the svg draws with currentColor */
+  cursor: pointer;
+  max-width: 0;
+  overflow: hidden;
+  /* return timing: the window closes as the logo slides back in */
+  transition: max-width 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.wordmark .octo:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.wordmark .octo svg {
+  display: block;
+  width: 1.15em;
+  height: 1.15em;
+  transform: translateX(-110%); /* parked inside the line, out of view */
+  /* return timing: the logo retreats into the line first */
+  transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* The open state holds while the pointer is on the name, the line, or
+   the cat itself — otherwise the act would reverse the moment you leave
+   "mihneaptu" and the cat could never be reached, let alone clicked.
+   :has() lets the container watch all three triggers at once. */
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .tick {
+  transform: rotate(-20deg); /* counter-clockwise stands "/" up into "|" */
+  /* exit timing: straighten right away */
+  transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) a.home {
+  max-width: 0;
+  /* exit timing: the box starts closing while the tail of "lab" is
+     still being absorbed, so the logo emerges right at the line
+     instead of a box-width away from it */
+  transition: max-width 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0.28s;
+}
+
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) a.home span {
+  transform: translateX(-110%); /* fully past the clip edge, i.e. the line */
+  /* exit timing: the visible journey through the line. An almost-even
+     curve so the travel can be seen, not a snap. */
+  transition: transform 0.4s cubic-bezier(0.45, 0.05, 0.35, 0.95) 0.03s;
+}
+
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .octo {
+  max-width: 1.3em;
+  /* exit timing: opens while the last letter is still being swallowed —
+     overlapping the stages is what keeps the act tight without losing
+     the story */
+  transition: max-width 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0.3s;
+}
+
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .octo svg {
+  transform: translateX(0);
+  /* exit timing: the logo walks out of the line, left to right, starting
+     right as the tail of "lab" disappears into it */
+  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1) 0.32s;
+}
+
+/* The light/dark switch. Styled like a token chip, not like a .btn —
+   it's part of the lab's chrome, not one of the specimens on display. */
+.theme-toggle {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-3);
+  cursor: pointer;
+  transition: color var(--speed-color) ease,
+              border-color var(--speed-color) ease;
+}
+
+.theme-toggle:hover {
+  color: var(--ink);
+  border-color: var(--line-strong);
+}
+
+.theme-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* A quiet way back home from a component page. Pinned to the top-left
+   corner and styled like the rest of the chrome (mono, muted) — visible
+   when you look for it, invisible when you don't. */
+.back-link {
+  position: fixed;
+  top: var(--space-5);
+  left: var(--space-5);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  text-decoration: none;
+  transition: color var(--speed-color) ease;
+}
+
+.back-link:hover {
+  color: var(--ink);
+}
+
+/* --- Type roles ------------------------------------------------------------ */
+
+.page-title {
+  font-family: var(--font-display);
+  font-size: var(--text-2xl);
+  font-weight: 700;
+  line-height: 1.05; /* big type needs tight lines or it falls apart */
+  letter-spacing: -0.02em;
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-size: var(--text-lg);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+}
+
+/* --- Specimen stage --------------------------------------------------------
+   The signature element of the lab: a white artboard with a faint dot
+   grid, like a canvas in a design tool. Components are pinned to it and
+   annotated in mono. */
+
+.stage {
+  background-color: var(--surface);
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 18px 18px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  padding: var(--space-6);
+}
+
+.stage-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4);
+}
+
+/* A pinned specimen: the component plus its mono label underneath */
+.specimen {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+}
+
+.specimen-label {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+}
+
+/* --- Component cards (homepage grid) --------------------------------------- */
+
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: var(--space-5);
+}
+
+.component-card {
+  display: block;
+  position: relative; /* anchors the optional corner tag */
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  text-decoration: none;
+  color: var(--ink);
+  overflow: hidden; /* clips the preview's dot grid to the rounded corners */
+  transition: box-shadow var(--speed-color) ease,
+              transform var(--speed-move) ease;
+}
+
+.component-card:hover {
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px); /* a gentle lift — the card is pickable */
+}
+
+.component-card:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* An optional status tag pinned to the card's top-right corner —
+   quiet chrome in the mono face, not part of the specimen itself. */
+.card-tag {
+  position: absolute;
+  top: var(--space-3);
+  right: var(--space-3);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  line-height: 1;
+  color: var(--ink-muted);
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: var(--space-1) var(--space-2);
+  opacity: 0.8;
+}
+
+.card-preview {
+  /* A miniature stage inside the card. pointer-events: none so the
+     preview buttons are scenery, not controls — the whole card is the link. */
+  background-image: radial-gradient(var(--line) 1px, transparent 1px);
+  background-size: 14px 14px;
+  border-bottom: 1px solid var(--line);
+  padding: var(--space-5);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+  min-height: 108px;
+  pointer-events: none;
+}
+
+.card-body {
+  padding: var(--space-4) var(--space-5) var(--space-5);
+}
+
+.card-name {
+  font-family: var(--font-display);
+  font-size: var(--text-md);
+  font-weight: 600;
+}
+
+.card-meta {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  margin-top: var(--space-1);
+}
+
+/* --- Footer ----------------------------------------------------------------- */
+
+.lab-footer {
+  border-top: 1px solid var(--line);
+  margin-top: var(--space-9);
+  padding: var(--space-5) 0 var(--space-7);
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--ink-muted);
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+/* --- Accessibility ----------------------------------------------------------
+   If someone has asked their OS to reduce motion, honor it: everything
+   still works, it just stops animating. */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+  }
+}

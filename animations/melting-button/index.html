@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Melting button · ui-lab</title>
+  <title>Melting button · mihneaptu/lab</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
 
   <!-- Sets the theme BEFORE the page paints, so there's no flash of the
        wrong colors. Your last choice wins; otherwise the OS preference. -->
@@ -53,6 +53,59 @@
       font-weight: 600;
       line-height: 1.2;
       color: var(--ink);
+    }
+
+    /* Model name and its thinking-effort level sit on one line;
+       position: relative anchors the hover tooltip below. */
+    .melt-heading {
+      position: relative;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: var(--space-2);
+    }
+
+    /* The thinking-effort annotation next to each model name — quiet lab
+       metadata, so it uses the mono face at low opacity. */
+    .melt-effort {
+      margin: 0;
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      font-weight: 400;
+      line-height: 1.2;
+      letter-spacing: 0.04em;
+      color: var(--ink);
+      opacity: 0.35;
+      cursor: default; /* it's a hover trigger, not selectable prose */
+      user-select: none;
+      transition: opacity var(--speed-color) ease;
+    }
+
+    .melt-effort:hover {
+      opacity: 0.6;
+    }
+
+    /* Revealed under a heading while the cursor rests on its effort
+       label. Starts slightly raised and transparent, then settles. */
+    .melt-crunch {
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      margin-top: var(--space-1);
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      line-height: 1.2;
+      white-space: nowrap;
+      color: var(--ink-muted);
+      opacity: 0;
+      transform: translate(-50%, -4px);
+      transition: opacity 220ms ease, transform 220ms cubic-bezier(0.2, 0, 0, 1);
+      pointer-events: none;
+    }
+
+    .melt-effort:hover + .melt-crunch {
+      opacity: 1;
+      transform: translate(-50%, 0);
     }
 
     .melt-slot {
@@ -414,7 +467,11 @@
 
   <main class="melt-comparison" aria-label="Melting button comparison">
     <section class="melt-specimen" aria-labelledby="fable-title">
-      <h2 class="melt-title" id="fable-title">Fable 5</h2>
+      <header class="melt-heading">
+        <h2 class="melt-title" id="fable-title">Fable 5</h2>
+        <p class="melt-effort">high</p>
+        <p class="melt-crunch" aria-hidden="true">&#10035; Crunched for 2m 45s</p>
+      </header>
       <div class="melt-slot">
         <button
           class="btn btn-primary btn-md melt-button melt-button--fable"
@@ -427,7 +484,11 @@
     </section>
 
     <section class="melt-specimen" aria-labelledby="sol-title">
-      <h2 class="melt-title" id="sol-title">GPT-5.6 Sol</h2>
+      <header class="melt-heading">
+        <h2 class="melt-title" id="sol-title">GPT-5.6 Sol</h2>
+        <p class="melt-effort">max</p>
+        <p class="melt-crunch" aria-hidden="true">Worked for 42m 22s</p>
+      </header>
       <div class="melt-slot">
         <button
           class="btn btn-primary btn-md melt-button melt-button--sol"

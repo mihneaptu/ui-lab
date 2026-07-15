@@ -1,0 +1,175 @@
+/* ==========================================================================
+   buttons.css — component № 1
+
+   Structure of this file:
+     1. .btn        — everything ALL buttons share
+     2. variants    — what job the button does (primary / secondary / ghost)
+     3. sizes       — how much room it takes (sm / md / lg)
+     4. states      — how it responds (hover / active / focus / disabled)
+
+   A button is described by combining classes, one from each group:
+     <button class="btn btn-primary btn-md">Save changes</button>
+
+   Note: every value below comes from tokens.css. If a number appears
+   here directly, it's a deliberate exception with a comment saying why.
+   ========================================================================== */
+
+/* --- 1. The base ------------------------------------------------------------
+   Shared anatomy. Variants and sizes only override what makes them
+   different, so all buttons stay siblings of each other. */
+
+.btn {
+  /* inline-flex centers the label perfectly, and handles an icon +
+     label pair later without any changes */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+
+  font-family: var(--font-body);
+  font-weight: 600;      /* labels are actions — a little bolder than prose */
+  line-height: 1;        /* the button's height comes from padding+height,
+                            not from line-height */
+  white-space: nowrap;   /* a label should never wrap onto two lines */
+
+  border: 1.5px solid transparent; /* every variant reserves the same border
+                                      width, so outlined and solid buttons
+                                      are exactly the same size side by side */
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  user-select: none;
+
+  /* color changes get a soft transition; movement gets a faster one */
+  transition: background-color var(--speed-color) ease,
+              border-color var(--speed-color) ease,
+              color var(--speed-color) ease,
+              transform var(--speed-move) ease;
+}
+
+/* --- 2. Variants ------------------------------------------------------------
+   The variant system is a hierarchy: ONE primary button per view (the
+   main action), secondary for real-but-alternative actions, ghost for
+   low-stakes actions that shouldn't compete for attention.
+
+   The interaction rule is the same for all three: the darker/stronger
+   the state, the "more pressed" the button feels.
+   (hover = accent-strong, active = accent-deep — see tokens.css) */
+
+/* PRIMARY — solid fill. The loudest thing in any view, which is exactly
+   why there should only ever be one. */
+.btn-primary {
+  background: var(--accent);
+  color: var(--accent-contrast); /* white on the dark button in light mode,
+                                    dark on the light button in dark mode */
+}
+
+.btn-primary:hover,
+.btn-primary.is-hover {          /* .is-hover exists only so the showcase
+                                    page can freeze this state for study */
+  background: var(--accent-strong);
+}
+
+.btn-primary:active,
+.btn-primary.is-active {
+  background: var(--accent-deep);
+}
+
+/* SECONDARY — outline. Same size and shape as primary (they're siblings),
+   but visually quieter: the fill is gone, only the frame remains. */
+.btn-secondary {
+  background: transparent;
+  border-color: var(--line-strong);
+  color: var(--ink);
+}
+
+.btn-secondary:hover,
+.btn-secondary.is-hover {
+  /* outline buttons can't get "darker", so they gain a faint tint
+     instead — same idea, adapted to the variant */
+  background: var(--accent-soft);
+  border-color: var(--accent);
+}
+
+.btn-secondary:active,
+.btn-secondary.is-active {
+  background: var(--accent-soft);
+  border-color: var(--accent-deep);
+  color: var(--accent-deep);
+}
+
+/* GHOST — label only. The accent color is doing all the work here:
+   it's the only signal that this text is clickable. */
+.btn-ghost {
+  background: transparent;
+  color: var(--accent);
+}
+
+.btn-ghost:hover,
+.btn-ghost.is-hover {
+  background: var(--accent-soft);
+  color: var(--accent-strong);
+}
+
+.btn-ghost:active,
+.btn-ghost.is-active {
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+}
+
+/* --- 3. Sizes ---------------------------------------------------------------
+   Fixed heights (not just padding) so buttons line up perfectly in rows.
+   Text size and padding step down together — a small button with big
+   text looks swollen.
+
+   md is the default. lg is for hero moments; sm for dense UI like
+   toolbars. Note sm is 32px tall — below the ~40px comfortable touch
+   target, so it's a desktop-density size, not a mobile one. */
+
+.btn-sm {
+  height: 32px;
+  padding: 0 var(--space-3);
+  font-size: var(--text-xs);
+}
+
+.btn-md {
+  height: 40px;
+  padding: 0 var(--space-4);
+  font-size: var(--text-sm);
+}
+
+.btn-lg {
+  height: 48px;
+  padding: 0 var(--space-5);
+  font-size: var(--text-md);
+}
+
+/* --- 4. States shared by all variants --------------------------------------- */
+
+/* ACTIVE — on top of getting darker, every button nudges down 1px while
+   pressed. It's barely visible and very feelable: the button physically
+   gives way under the click. */
+.btn:active,
+.btn.is-active {
+  transform: translateY(1px);
+}
+
+/* FOCUS — the keyboard user's cursor. :focus-visible means the ring only
+   appears for keyboard navigation, not after a mouse click.
+   The 2px offset puts daylight between button and ring, so it reads as
+   "selection" rather than part of the button itself. */
+.btn:focus-visible,
+.btn.is-focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* DISABLED — dimmed but still legible. A disabled button is information
+   ("this action exists, but not right now"), so people must still be
+   able to read it. Never dim below readable contrast. */
+.btn:disabled {
+  background: var(--line);
+  border-color: transparent;
+  color: var(--ink-muted);
+  cursor: not-allowed;
+  transform: none; /* a disabled button doesn't press down */
+}
