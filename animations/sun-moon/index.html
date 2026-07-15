@@ -358,8 +358,13 @@
              mask punches the drawing away, so inside the group they'd
              be erased too. -->
         <g class="stars" fill="currentColor">
-          <circle class="star star-1" cx="18.6" cy="7.2" r="0.9" />
-          <circle class="star star-2" cx="20.8" cy="12.6" r="0.6" />
+          <!-- Each star sits in a .star-jig group because the cursor
+               physics (the script below) shakes the WRAPPER, while the
+               star's own transform belongs to the flight in and out of
+               the crescent — nested transforms compose instead of
+               fighting over one property. -->
+          <g class="star-jig"><circle class="star star-1" cx="18.6" cy="7.2" r="0.9" /></g>
+          <g class="star-jig"><circle class="star star-2" cx="20.8" cy="12.6" r="0.6" /></g>
         </g>
       </svg>
     </button>
@@ -406,6 +411,138 @@
        the first paint, so the pose is applied without playing the morph
        — you only see the animation when YOU flip the sky. */
     syncPose();
+
+    /* --- Cursor jiggle ----------------------------------------------------
+       The rays and stars aren't wired to a canned hover animation —
+       each one is a tiny spring-mounted body the cursor physically
+       brushes. Moving the mouse near a part flicks it in the direction
+       the cursor is travelling; a damped spring then pulls it home,
+       overshooting a little on the way. Hold the mouse still and
+       nothing moves: the jiggle IS your hand's motion, echoed.
+
+       Everything works in viewBox units (the icon is 24 units across,
+       3px each on screen) so the numbers below stay meaningful next to
+       the svg coordinates. */
+
+    const icon = document.querySelector(".sky-icon");
+
+    /* One entry per springy part: the element that takes the transform,
+       its rest position (where the cursor's distance is measured), and
+       which sky it belongs to — rays answer by day, stars by night, so
+       the swallowed rays can't shiver invisibly inside the moon.
+       The stars enter through their WRAPPER group: a star's own
+       transform belongs to the morph's flight, and nested transforms
+       compose instead of fighting over one property. */
+    const parts = [];
+
+    for (const line of icon.querySelectorAll(".rays line")) {
+      parts.push({
+        el: line,
+        cx: (+line.getAttribute("x1") + +line.getAttribute("x2")) / 2,
+        cy: (+line.getAttribute("y1") + +line.getAttribute("y2")) / 2,
+        moon: false,
+        x: 0, y: 0, vx: 0, vy: 0,
+      });
+    }
+
+    for (const jig of icon.querySelectorAll(".star-jig")) {
+      const star = jig.querySelector(".star");
+      parts.push({
+        el: jig,
+        cx: +star.getAttribute("cx"),
+        cy: +star.getAttribute("cy"),
+        moon: true,
+        x: 0, y: 0, vx: 0, vy: 0,
+      });
+    }
+
+    const REACH = 4;       // influence radius around a part, in units
+    const FLICK = 6;       // how much of the cursor's motion transfers
+    const STIFFNESS = 520; // spring pull toward home (1/s²)
+    const DAMPING = 11;    // low enough that the return overshoots (1/s)
+    const V_MAX = 32;      // units/s — a wild swipe can't launch a part
+
+    let pointer = null; // last cursor spot, in viewBox units
+
+    /* Listening on the whole button, not just the 72px icon: REACH
+       extends past the icon's edge, so a ray should already stir as
+       the cursor closes in on it from the surrounding paper. */
+    toggle.addEventListener("pointermove", (e) => {
+      /* remeasure every move — the button itself drifts 2px upward on
+         hover, so a cached rect would smear every coordinate */
+      const r = icon.getBoundingClientRect();
+      const unit = r.width / 24;
+      const p = { x: (e.clientX - r.left) / unit, y: (e.clientY - r.top) / unit };
+
+      if (pointer) {
+        const dx = p.x - pointer.x;
+        const dy = p.y - pointer.y;
+        const isMoon = toggle.classList.contains("is-moon");
+
+        for (const part of parts) {
+          if (part.moon !== isMoon) continue;
+          const d = Math.hypot(p.x - part.cx, p.y - part.cy);
+          if (d >= REACH) continue;
+
+          /* smooth falloff: full strength on the part, zero at REACH */
+          const f = 1 - (d / REACH) ** 2;
+          part.vx += dx * FLICK * f;
+          part.vy += dy * FLICK * f;
+
+          const v = Math.hypot(part.vx, part.vy);
+          if (v > V_MAX) {
+            part.vx *= V_MAX / v;
+            part.vy *= V_MAX / v;
+          }
+        }
+        wake();
+      }
+      pointer = p;
+    });
+
+    toggle.addEventListener("pointerleave", () => {
+      /* forget the trail so re-entry doesn't read as one giant delta;
+         parts already in motion just spring home on their own */
+      pointer = null;
+    });
+
+    let rafId = null;
+    let lastT = 0;
+
+    function wake() {
+      if (rafId === null) {
+        lastT = performance.now();
+        rafId = requestAnimationFrame(tick);
+      }
+    }
+
+    function tick(t) {
+      /* clamp dt so a throttled background tab can't slingshot a part */
+      const dt = Math.min((t - lastT) / 1000, 0.032);
+      lastT = t;
+
+      let alive = false;
+      for (const part of parts) {
+        /* semi-implicit Euler: update velocity from the spring force
+           and friction FIRST, then move — stabler than the naive order */
+        part.vx += (-STIFFNESS * part.x - DAMPING * part.vx) * dt;
+        part.vy += (-STIFFNESS * part.y - DAMPING * part.vy) * dt;
+        part.x += part.vx * dt;
+        part.y += part.vy * dt;
+
+        if (Math.hypot(part.x, part.y) > 0.002 || Math.hypot(part.vx, part.vy) > 0.05) {
+          alive = true;
+          /* px inside svg = user units, so these ARE viewBox units */
+          part.el.style.transform = `translate(${part.x}px, ${part.y}px)`;
+        } else if (part.el.style.transform) {
+          /* settled: snap off the residue and stop touching the style */
+          part.x = part.y = part.vx = part.vy = 0;
+          part.el.style.transform = "";
+        }
+      }
+
+      rafId = alive ? requestAnimationFrame(tick) : null;
+    }
   </script>
   <script src="../../scripts/haptics.js"></script>
 
