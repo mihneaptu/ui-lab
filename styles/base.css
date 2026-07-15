@@ -38,6 +38,11 @@ body {
   color: var(--ink);
   background: var(--paper);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  /* The loaded weights (400–600 body/mono, 400–800 display) are the only
+     ones allowed to render: a missing file must fail visibly, not as a
+     browser-faked bold or slanted italic. */
+  font-synthesis: none;
 }
 
 .container {
@@ -362,6 +367,7 @@ a:focus-visible {
 .theme-toggle {
   display: inline-flex;
   align-items: center;
+  position: relative; /* anchors the invisible hit-area extension below */
   color: var(--ink-muted);
   background: var(--surface);
   border: 1px solid var(--line);
@@ -371,6 +377,15 @@ a:focus-visible {
   transition: color var(--speed-color) ease,
               border-color var(--speed-color) ease,
               transform var(--speed-move) ease;
+}
+
+/* The visible chip is ~35px — under the 44px touch target. The halo
+   extends the clickable area without growing the chip; it has no box
+   of its own, so nothing changes visually. */
+.theme-toggle::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
 }
 
 /* The chip's icon — the sun-moon exhibit's morph in miniature, and
@@ -449,9 +464,11 @@ a:focus-visible {
   border-color: var(--line-strong);
 }
 
-/* Pressing the sky, in miniature — same give as the exhibit's button. */
+/* Pressing the sky, in miniature — same give as the exhibit's button
+   (0.97, sun-moon/index.html). Anything below ~0.95 reads exaggerated
+   on a chip this small. */
 .theme-toggle:active {
-  transform: scale(0.94);
+  transform: scale(0.97);
 }
 
 .theme-toggle:focus-visible {
@@ -473,6 +490,14 @@ a:focus-visible {
   transition: color var(--speed-color) ease;
 }
 
+/* One line of 13px mono is a ~21px-tall target. The halo brings it to
+   ~44px each way; the corner around it is empty, so it overlaps nothing. */
+.back-link::after {
+  content: "";
+  position: absolute;
+  inset: -12px;
+}
+
 .back-link:hover {
   color: var(--ink);
 }
@@ -485,13 +510,16 @@ a:focus-visible {
   font-weight: 700;
   line-height: 1.05; /* big type needs tight lines or it falls apart */
   letter-spacing: -0.02em;
+  text-wrap: balance; /* a two-line title splits evenly, never 90/10 */
 }
 
 .section-title {
   font-family: var(--font-display);
   font-size: var(--text-lg);
   font-weight: 600;
+  line-height: 1.2; /* headings tighten the body's 1.6 */
   letter-spacing: -0.01em;
+  text-wrap: balance;
 }
 
 /* --- Specimen stage --------------------------------------------------------
@@ -578,7 +606,9 @@ a:focus-visible {
   border: 1px solid var(--line);
   border-radius: 999px;
   padding: var(--space-1) var(--space-2);
-  opacity: 0.8;
+  /* No opacity dimming here: --ink-muted is already the quiet voice, and
+     at 13px it sits just above the 4.5:1 contrast floor — fading it to
+     80% dropped it under. */
 }
 
 /* The "interactive" tag hints that it responds: hovering it lets a
@@ -709,6 +739,21 @@ a:focus-visible {
 /* --- Accessibility ----------------------------------------------------------
    If someone has asked their OS to reduce motion, honor it: everything
    still works, it just stops animating. */
+
+/* Present in the document outline (screen readers, reader modes) but not
+   on screen — for headings a visual page doesn't need but its structure
+   does. The clip dance is the standard recipe: display:none would remove
+   it from the outline too. */
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
 
 @media (prefers-reduced-motion: reduce) {
   *,

@@ -74,15 +74,18 @@
       font-weight: 400;
       line-height: 1.2;
       letter-spacing: 0.04em;
-      color: var(--ink);
-      opacity: 0.35;
+      /* Quiet via the muted token, not via opacity: ink at 35% landed
+         around 2.3:1 against the paper — under the 4.5:1 floor for
+         13px text. --ink-muted is the same whisper, tuned in tokens.css
+         to clear that floor in both themes. */
+      color: var(--ink-muted);
       cursor: default; /* it's a hover trigger, not selectable prose */
       user-select: none;
-      transition: opacity var(--speed-color) ease;
+      transition: color var(--speed-color) ease;
     }
 
     .melt-effort:hover {
-      opacity: 0.6;
+      color: var(--ink);
     }
 
     /* Revealed under a heading while the cursor rests on its effort
@@ -466,6 +469,10 @@
   <a class="back-link" href="../../index.html">&larr; back</a>
 
   <main class="melt-comparison" aria-label="Melting button comparison">
+    <!-- The exhibit needs no visible title, but its outline does: the
+         two model names are h2s, and an h2 without an h1 above it is a
+         skipped level for anyone navigating by headings. -->
+    <h1 class="visually-hidden">Melting button</h1>
     <section class="melt-specimen" aria-labelledby="fable-title">
       <header class="melt-heading">
         <h2 class="melt-title" id="fable-title">Fable 5</h2>
