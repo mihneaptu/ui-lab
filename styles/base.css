@@ -684,44 +684,75 @@ a:focus-visible {
    The sun-moon chip doesn't snap the lab to the other theme — the whole
    page crossfades on the morph's own 500ms clock, exactly like the
    playground exhibit. theme.js pins .theme-fading on <html> for the
-   duration of a flip; while it's there, every themed color rides the
-   slow clock. Scoped to a class (not permanent) so hover and press
-   feedback keep their fast micro-interaction speeds the rest of the
-   time. The chip's icon parts are excluded: they animate TRANSFORMS,
-   and this blanket shorthand would wipe those transitions mid-morph. */
+   duration of a flip.
+
+   The fade animates the TOKENS, not the elements: tokens.css registers
+   every color token with @property, so while this transition is live
+   the token values themselves interpolate at the root. Every element
+   reading var(--ink), var(--paper), … repaints from the same in-flight
+   value each frame — one clock, perfect lockstep, by construction. And
+   because no element's own `transition` is touched, every micro-
+   interaction (the wordmark's reveal act, the chip's morph, hover
+   lifts) keeps its own timing even mid-fade.
+
+   This replaced a blanket `* { transition: … !important }` approach,
+   which had two real bugs: the !important shorthand ERASED every
+   element's own transitions for the duration (the reveal act played
+   instantly during a flip), and the wordmark's color transition kept
+   restarting itself every frame, so it crawled at half speed and
+   landed with a visible pop ~500ms after the rest of the page. */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Non-inherited paints (backgrounds, borders, shadows) are safe to
-     fade on every element — each one animates its own value once. */
-  html.theme-fading *:not(.tt-sky):not(.tt-sky *),
-  html.theme-fading *::before,
-  html.theme-fading *::after {
-    transition: background-color 500ms ease,
-                border-color 500ms ease,
-                box-shadow 500ms ease,
-                fill 500ms ease,
-                stroke 500ms ease !important;
+  /* The accent family rides a QUICK flip centered inside the slow
+     fade, not the full 500ms. The accent and its contrast swap ends
+     in opposite directions (dark pill/white label ↔ light pill/dark
+     label), so at some instant they MUST pass through each other —
+     on the slow clock that pass took ~110ms and the primary button's
+     label visibly melted into its pill. A 220ms flip starting at
+     140ms shrinks the pass to a blink, and it begins and ends while
+     the paper is still mid-crossfade, so it reads as part of the same
+     event rather than a separate snap. */
+  html.theme-fading {
+    transition: --paper 500ms ease,
+                --surface 500ms ease,
+                --ink 500ms ease,
+                --ink-muted 500ms ease,
+                --line 500ms ease,
+                --line-strong 500ms ease,
+                --accent 220ms ease 140ms,
+                --accent-strong 220ms ease 140ms,
+                --accent-deep 220ms ease 140ms,
+                --accent-soft 220ms ease 140ms,
+                --accent-contrast 220ms ease 140ms,
+                --gold 500ms ease;
   }
 
-  /* color is different: it INHERITS. Give every element a color
-     transition and nested text stops inheriting the animated value —
-     each child instead starts its own transition toward its parent's
-     current frame, every frame, so deep text trails its parent and
-     shimmers (the wordmark flickered exactly like this). Only the
-     elements that SET an explicit color transition it; everyone below
-     them inherits the in-flight value directly and moves in lockstep.
-     That's also why plain `a` must NOT be here: the wordmark's links
-     use color: inherit, and giving them their own transition restarts
-     the chase one level down. */
-  html.theme-fading :is(body, .wordmark, .tick, .theme-toggle,
-      .back-link, .component-card, .card-tag, .card-meta, .btn,
-      .specimen-label, .lab-footer):not(.tt-sky):not(.tt-sky *) {
-    transition: color 500ms ease,
-                background-color 500ms ease,
-                border-color 500ms ease,
-                box-shadow 500ms ease,
-                fill 500ms ease,
-                stroke 500ms ease !important;
+  /* The one thing token interpolation can't carry: the shadow tokens
+     are whole shadow LISTS (rgba literals per theme), not single
+     colors, so they can't register as <color> and would snap at the
+     flip. The lab's only shadowed chrome rides the change out with an
+     ordinary box-shadow transition — transform is listed too so the
+     card's hover lift keeps its own fast clock even mid-fade. */
+  html.theme-fading :is(.stage, .component-card) {
+    transition: box-shadow 500ms ease,
+                transform var(--speed-move) ease;
+  }
+
+  /* Elements with their own fast color transitions (hover feedback)
+     must NOT keep them while the tokens are animating: a transition
+     pointed at a moving target restarts every frame and only closes
+     a fraction of the gap each time, so the element trails the fade
+     and is still catching up after the page has settled (the button
+     preview sat mid-gray on a finished light page). For the fade's
+     duration they read the animating tokens raw — perfectly in step —
+     and keep only their movement transitions. Hover color feedback
+     during the 600ms window snaps; nobody can tell. */
+  html.theme-fading :is(.btn, .theme-toggle) {
+    transition: transform var(--speed-move) ease;
+  }
+
+  html.theme-fading :is(.back-link, .card-tag-rainbow) {
+    transition: none;
   }
 }
 
