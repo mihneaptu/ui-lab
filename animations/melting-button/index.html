@@ -111,20 +111,27 @@
       pointer-events: none;
     }
 
-    .melt-effort:hover + .melt-crunch {
+    .melt-effort:hover + .melt-crunch,
+    .melt-heading.is-open .melt-crunch {
       opacity: 1;
       transform: translate(-50%, 0);
     }
 
-    /* Touch screens have no hover, so there the caption is simply
-       always out — a printed annotation instead of a whispered one.
-       (hover: none) matches devices whose primary pointer can't hover,
-       i.e. phones and tablets; desktops keep the reveal. */
-    @media (hover: none) {
-      .melt-crunch {
-        opacity: 1;
-        transform: translate(-50%, 0);
-      }
+    /* Touch screens have no hover, so there the effort label answers
+       taps instead: a script below toggles .is-open on the heading, and
+       a tap anywhere else closes it again. */
+
+    /* The label is one short mono word (~16px tall); the halo grows the
+       tap target toward 44px without moving the heading's layout. The
+       caption below is pointer-events: none, so the overlap is safe. */
+    .melt-effort {
+      position: relative;
+    }
+
+    .melt-effort::after {
+      content: "";
+      position: absolute;
+      inset: -12px;
     }
 
     .melt-slot {
@@ -568,6 +575,23 @@
     }
 
     document.querySelectorAll(".melt-button").forEach(attachMelt);
+
+    // The crunch captions on touch: tapping an effort label toggles its
+    // heading open; tapping anywhere else closes whatever is open. On
+    // desktop this coexists with the hover reveal (a click just pins it).
+    document.addEventListener("click", (event) => {
+      const effort = event.target.closest(".melt-effort");
+
+      document.querySelectorAll(".melt-heading.is-open").forEach((heading) => {
+        if (!effort || !heading.contains(effort)) {
+          heading.classList.remove("is-open");
+        }
+      });
+
+      if (effort) {
+        effort.closest(".melt-heading").classList.toggle("is-open");
+      }
+    });
   </script>
   <script src="../../scripts/haptics.js"></script>
 
