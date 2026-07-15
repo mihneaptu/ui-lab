@@ -100,16 +100,6 @@
     .sky-icon {
       width: 72px;
       height: 72px;
-      transition: transform 250ms var(--sky-ease);
-    }
-
-    /* Anticipation: hovering the resting sun eases the icon a few
-       degrees clockwise — the same direction the morph will spin —
-       like a switch taking up slack before it flips. Only the rays
-       visibly move (the disc is a circle), and only in the sun state:
-       a nudged crescent would just look broken. */
-    .sky-toggle:not(.is-moon):hover .sky-icon {
-      transform: rotate(10deg);
     }
 
     /* transform-box: view-box makes "center" mean the middle of the
@@ -159,6 +149,7 @@
          bite is about to carve. (scale 0.25 parks them well inside
          r=6, safely covered even before the disc finishes growing.) */
       transform: rotate(45deg) scale(0.25);
+      transition-duration: 280ms;
       transition-delay: 0ms; /* the rays lead going to the moon... */
     }
 
@@ -172,11 +163,12 @@
       /* Parked at cx=33, this lands the bite at (17.3,10.5) — about
          5.5 units off the disc's center, leaving a crescent ~7 units
          thick that opens toward the top-right.
-         Starts almost with the rays, so the crescent is carving at the
-         exact time they rotate in — one simultaneous morph. The rays'
-         quicker clock (above) is what keeps them clear of the hole. */
+         The 140ms holds the bite until the rays are most of the way
+         home — otherwise its notch appears on the right rim while the
+         LEFT rays still have the longest journey ahead, and the right
+         side visibly wins the race. Rays land, then the carve sweeps. */
       transform: translate(-15.7px, 0);
-      transition-delay: 60ms;
+      transition-delay: 140ms;
     }
 
     /* Going back (moon → sun) the base rules above already reverse
@@ -184,34 +176,45 @@
        first and the rays pop out a beat later. */
 
     /* --- The stars --------------------------------------------------------
-       The payoff: once the crescent has settled, two small stars pop
-       into the hollow it carved — the moon state becomes "night", not
-       just an end pose. They arrive late and staggered, but leave
-       instantly and fast, so the sky is clear before the sun returns. */
+       The payoff: once the crescent has settled, two small stars fly
+       out of it into the hollow it carved — and when day returns they
+       dive back in, eaten by the moon. No opacity tricks: their HOME
+       position is tucked inside the crescent's flesh, where ink on ink
+       is simply invisible (the same trick that hides the swallowed
+       rays). The spot is chosen to sit inside the small sun disc too,
+       so they stay hidden in daylight as well. */
 
     .star {
       transform-box: fill-box;
       transform-origin: center;
-      transform: scale(0);
-      opacity: 0;
-      transition: transform 150ms var(--sky-ease),
-                  opacity 150ms ease;
+      /* return flight: dive back into the moon right away */
+      transition: transform 280ms var(--sky-ease);
     }
 
+    .star-1 {
+      opacity: 0.9;
+      transform: translate(-11.2px, 5.8px) scale(0.8);
+    }
+
+    .star-2 {
+      opacity: 0.7; /* a touch dimmer — reads as farther away */
+      transform: translate(-12.9px, 1.6px) scale(0.8);
+    }
+
+    /* Night falls: the moon releases its stars at the same speed it
+       swallows them — they launch while the crescent is still being
+       carved, invisible over its flesh, and the sweeping bite uncovers
+       them mid-flight. Staggered so they read as two arrivals. */
     .sky-toggle.is-moon .star {
-      transform: scale(1);
-      transition: transform 250ms var(--sky-ease),
-                  opacity 250ms ease;
+      transform: none;
     }
 
     .sky-toggle.is-moon .star-1 {
-      opacity: 0.9;
-      transition-delay: 480ms;
+      transition-delay: 240ms;
     }
 
     .sky-toggle.is-moon .star-2 {
-      opacity: 0.7; /* a touch dimmer — reads as farther away */
-      transition-delay: 590ms;
+      transition-delay: 320ms;
     }
 
     /* --- Caption ---------------------------------------------------------
@@ -276,10 +279,13 @@
           <circle class="disc" cx="12" cy="12" r="6" fill="currentColor" />
         </g>
 
-        <!-- Two tiny stars for the moon's sky, sitting in the hollow
-             the bite carves out. They live OUTSIDE the masked group on
-             purpose: that hollow is exactly where the mask punches the
-             drawing away, so inside the group they'd be erased too. -->
+        <!-- Two tiny stars for the moon's sky. These coordinates are
+             their SKY positions, in the hollow the bite carves out;
+             at rest CSS translates them home, inside the crescent's
+             flesh, where they hide ink-on-ink. They live OUTSIDE the
+             masked group on purpose: the hollow is exactly where the
+             mask punches the drawing away, so inside the group they'd
+             be erased too. -->
         <g class="stars" fill="currentColor">
           <circle class="star star-1" cx="18.6" cy="7.2" r="0.9" />
           <circle class="star star-2" cx="20.8" cy="12.6" r="0.6" />
