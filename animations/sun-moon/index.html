@@ -282,40 +282,14 @@
     }
 
     /* --- Caption ---------------------------------------------------------
-       Quiet mono metadata under the exhibit, like a specimen label.
-
-       Both words are always in the DOM, stacked in the same grid cell;
-       the theme decides which one is home. Swapping textContent would
-       snap — instead the leaving word smears upward through a blur
-       while the arriving one sharpens into place from the other side,
-       so the label reads like one word morphing, not two frames. */
+       Quiet mono metadata under the exhibit, like a specimen label. */
 
     .sky-label {
-      display: grid;
-      justify-items: center;
       font-family: var(--font-mono);
       font-size: var(--text-xs);
       color: var(--ink-muted);
       user-select: none;
       transition: color 500ms ease; /* rides the paper's crossfade */
-    }
-
-    .sky-word {
-      grid-area: 1 / 1; /* both words share the cell; the cell keeps the
-                           wider word's width, so nothing reflows */
-      /* Fade out, THEN fade in — never both at once. The delay here
-         belongs to the ARRIVING word (this rule matches the visible
-         state): it waits for the leaving word to finish its fade
-         before starting its own. ease-in-out keeps both ends of each
-         fade soft — no hard edge when a fade starts or lands. */
-      transition: opacity 140ms ease-in-out 140ms;
-    }
-
-    /* The leaving word drops the delay and goes first, immediately. */
-    .sky-label.is-moon .sky-word-sun,
-    .sky-label:not(.is-moon) .sky-word-moon {
-      opacity: 0;
-      transition-delay: 0ms;
     }
   </style>
 </head>
@@ -386,10 +360,7 @@
 
     <!-- aria-hidden: the button's label already tells the whole story;
          announcing this too would say everything twice. -->
-    <p class="sky-label" aria-hidden="true">
-      <span class="sky-word sky-word-sun">sun</span>
-      <span class="sky-word sky-word-moon">moon</span>
-    </p>
+    <p class="sky-label" aria-hidden="true">sun</p>
   </main>
 
   <script>
@@ -403,15 +374,26 @@
       const isMoon = root.dataset.theme === "dark";
       toggle.classList.toggle("is-moon", isMoon);
       toggle.setAttribute("aria-pressed", String(isMoon));
-      /* the class drives the caption's blur-morph in CSS — both words
-         are always in the markup, so there's no text to swap */
-      label.classList.toggle("is-moon", isMoon);
+      label.textContent = isMoon ? "moon" : "sun";
     }
 
+    /* The word changes when the shape does: ~200ms into the 400ms morph
+       the crescent bite lands (going dark) / the rays are back (going
+       light), so that's the frame where the icon stops being the old
+       body — and the caption switches with it, no fade needed. */
+    let labelTimer;
     toggle.addEventListener("click", () => {
       root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
       localStorage.setItem("theme", root.dataset.theme);
-      syncPose();
+
+      const isMoon = root.dataset.theme === "dark";
+      toggle.classList.toggle("is-moon", isMoon);
+      toggle.setAttribute("aria-pressed", String(isMoon));
+
+      clearTimeout(labelTimer);
+      labelTimer = setTimeout(() => {
+        label.textContent = isMoon ? "moon" : "sun";
+      }, 200);
     });
 
     /* If you arrive in dark mode, wake up as the moon. This runs before
