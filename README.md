@@ -11,6 +11,7 @@ no build step, just HTML and CSS.
 | Experiment | Notes |
 | --- | --- |
 | [Melting button](animations/melting-button/index.html) | A button that melts on hover, shown as a side-by-side comparison of two implementations |
+| [Sun to moon](animations/sun-moon/index.html) | A sun that morphs into a moon on click — rays and stars ride spring physics, and the caption swaps ink mid-morph |
 
 ## Running locally
 
@@ -34,3 +35,8 @@ styles/               Shared design tokens and base styles
 scripts/              The tiny theme switcher
 docs/                 Design notes behind each experiment
 ```
+
+## License
+
+[MIT](LICENSE) — every animation is a single dependency-free file, free to
+take into your own projects.
