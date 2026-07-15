@@ -51,6 +51,11 @@
                                  flips to dark in the dark theme, where the
                                  accent itself is light */
 
+  /* The one hue in the whole lab: a gold reserved for the header's
+     star easter egg. Nothing else may use it — one splash of color
+     stays a delight; a second one starts a palette. */
+  --gold: #eab308;
+
   /* Shadows are for elevation, not decoration. Soft and barely-there:
      if you notice the shadow itself, it's too strong. Defined here (not
      in SHAPE & DEPTH) because they change with the theme. */
@@ -146,6 +151,9 @@
   --accent-deep: #bfbfbf;
   --accent-soft: #262626;
   --accent-contrast: #111111; /* dark label on the light button */
+
+  /* The stars' gold, a notch brighter so it reads on the dark paper */
+  --gold: #facc15;
 
   /* Shadows barely read on dark backgrounds, so they lean a bit heavier */
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);

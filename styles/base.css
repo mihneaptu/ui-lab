@@ -74,6 +74,7 @@ a:focus-visible {
   /* Flex keeps the three pieces (name, tick, "lab") on one shared
      baseline even while the last two animate their widths below. */
   display: inline-flex;
+  position: relative; /* anchors the stars that fly out of the logo on hover */
   align-items: baseline;
   font-family: var(--font-mono);
   font-size: var(--text-sm);
@@ -209,6 +210,111 @@ a:focus-visible {
   /* exit timing: the logo walks out of the line, left to right, starting
      right as the tail of "lab" disappears into it */
   transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1) 0.32s;
+}
+
+/* Hovering the cat itself earns a bonus scene: three golden stars
+   fly out of the logo, left to right, swinging gently — one pass,
+   then the sky empties until the next hover. The cast of <span>s and
+   each star's flight plan (lane, speed, size, delay — the custom
+   properties read below) come from scripts/octo-stars.js, which
+   starts the show by adding .playing; this stylesheet owns
+   everything the stars actually DO.
+
+   They live OUTSIDE the .octo link (whose overflow:hidden is busy
+   being the reveal's clipping window and would trap them) as a
+   sibling pinned to the wordmark's right edge — exactly where the
+   logo sits.
+
+   Each star is two elements doing one job each: the outer span flies
+   steadily rightward (linear), while its ::before — the star shape
+   itself — swings up and down on its own clock (ease-in-out, like a
+   pendulum). Two axes on two mismatched clocks combine into a smooth
+   swinging glide where no two passes look quite the same. */
+
+.octo-stars {
+  position: absolute;
+  /* The horizontal anchor is set per-show by the script, in px from
+     the wordmark's LEFT edge — the stable one. Anchoring to the right
+     edge (left: 100%) would glue the stars to a moving target: that
+     edge travels whenever the reveal act plays back, dragging a
+     still-fading show sideways with it. The 100% below is only the
+     resting value for the no-JS case, where no stars ever fly. */
+  left: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3.2em;  /* the flight corridor */
+  height: 1.4em; /* a bit taller than the logo, so the lanes fan out */
+  pointer-events: none; /* scenery — never blocks a click */
+  /* The whole scene fades as one: .playing (added by the script) only
+     fades this container in. When the pointer leaves mid-show, the
+     class drops and the container fades back out while the stars KEEP
+     FLYING underneath — the show dissolves in motion rather than
+     freezing, the same soft exit the stars get at the end of the
+     corridor. */
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+/* One star. Its whole flight plan arrives as custom properties set by
+   the script; the fallbacks only matter if a star is ever created by
+   hand. `1` iteration, not infinite: each star flies its corridor
+   once and is done, so the show ends by itself — the sky empties even
+   if the cursor stays on the logo, until the next hover restages it. */
+.octo-stars span {
+  position: absolute;
+  left: 0;
+  top: var(--lane, 36%);
+  opacity: 0; /* covers the delay phase before the star's launch */
+  animation: octo-star-flight var(--flight, 1.3s) linear var(--wait, 0s) 1;
+}
+
+/* The star shape: a classic five-pointed star cut from a square with
+   clip-path — crisper and more portable than hoping a ★ glyph
+   renders the same in every font. Gold is the lab's only hue,
+   reserved in tokens.css for exactly this moment. */
+.octo-stars span::before {
+  content: "";
+  display: block;
+  width: var(--size, 0.5em);
+  height: var(--size, 0.5em);
+  background: var(--gold);
+  clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+  /* The swing may loop — it's invisible whenever the flight isn't
+     mid-corridor, so only the flight's iteration count matters. */
+  animation: octo-star-swing var(--swing, 0.6s) ease-in-out infinite alternate;
+}
+
+/* The flight: pop out from behind the logo, glide right, and fade
+   before the corridor ends — the disappearance reads as distance
+   traveled, not as hitting a wall. */
+@keyframes octo-star-flight {
+  0%   { transform: translateX(-0.3em); opacity: 0; }
+  12%  { opacity: 1; }
+  78%  { opacity: 1; }
+  100% { transform: translateX(2.6em); opacity: 0; }
+}
+
+/* The swing: an easy pendulum around the star's own lane. `alternate`
+   plays it back and forth so the turnarounds are soft, never a snap. */
+@keyframes octo-star-swing {
+  from { transform: translateY(-0.16em); }
+  to   { transform: translateY(0.16em); }
+}
+
+/* The script adds .playing when the cat is hovered (hovering the name
+   merely reveals it) and removes it when the cursor leaves or the last
+   star has landed. The stars are already flying the moment they're
+   staged — this only lifts the curtain. */
+.octo-stars.playing {
+  opacity: 1;
+}
+
+/* Under reduced motion the global rule below would collapse these
+   infinite loops into a flicker, so the stars simply stay home. */
+@media (prefers-reduced-motion: reduce) {
+  .octo-stars {
+    display: none;
+  }
 }
 
 /* The light/dark switch. Styled like a token chip, not like a .btn —
