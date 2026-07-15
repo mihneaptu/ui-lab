@@ -320,21 +320,113 @@ a:focus-visible {
 /* The light/dark switch. Styled like a token chip, not like a .btn —
    it's part of the lab's chrome, not one of the specimens on display. */
 .theme-toggle {
-  font-family: var(--font-mono);
-  font-size: var(--text-xs);
+  display: inline-flex;
+  align-items: center;
   color: var(--ink-muted);
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 999px;
-  padding: var(--space-1) var(--space-3);
+  padding: var(--space-2);
   cursor: pointer;
   transition: color var(--speed-color) ease,
-              border-color var(--speed-color) ease;
+              border-color var(--speed-color) ease,
+              transform var(--speed-move) ease;
+}
+
+/* The chip's icon — the sun-moon exhibit's morph in miniature, and
+   the chip's ONLY content: the icon is the current sky. Clicking the
+   sun sinks its rays into the swelling disc while the mask's bite
+   circle carves the crescent, and the lab darkens around it.
+   All three parts share one ease; the delays choreograph the handoff,
+   flipped per direction: going to the moon the rays sink in first and
+   the bite carves last, coming back the crescent heals first and the
+   rays climb out last. The rays run a touch faster so the sweeping
+   bite hole never catches them. */
+
+.tt-sky {
+  display: block;
+  width: 1.25em;
+  height: 1.25em;
+}
+
+.tt-disc,
+.tt-rays {
+  transform-box: view-box;
+  transform-origin: center;
+}
+
+/* Sun pose (light theme) — these transitions time the RETURN to sun */
+.tt-rays {
+  transition: transform 320ms cubic-bezier(0.65, 0, 0.35, 1) 140ms;
+}
+
+.tt-disc {
+  transition: transform 400ms cubic-bezier(0.65, 0, 0.35, 1) 40ms;
+}
+
+.tt-bite {
+  transition: transform 400ms cubic-bezier(0.65, 0, 0.35, 1) 0ms;
+}
+
+/* Moon pose (dark theme) + the arrival timing: rays lead and land,
+   THEN the bite carves — held back 140ms so its notch doesn't show on
+   the right rim while the left rays still have the longest journey. */
+[data-theme="dark"] .tt-rays {
+  transform: rotate(45deg) scale(0.25);
+  transition-duration: 280ms;
+  transition-delay: 0ms;
+}
+
+[data-theme="dark"] .tt-disc {
+  transform: scale(1.75);
+  transition-delay: 40ms;
+}
+
+[data-theme="dark"] .tt-bite {
+  transform: translate(-15.7px, 0);
+  transition-delay: 140ms;
+}
+
+/* The chip's stars, same life as the exhibit's: home is inside the
+   crescent's flesh (ink on ink, invisible — a spot that also hides
+   inside the small sun disc), the night sky releases them, and the
+   day has the moon eat them back at the same speed. */
+.tt-star {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: transform 280ms cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+.tt-star-1 {
+  opacity: 0.9;
+  transform: translate(-11.2px, 5.8px) scale(0.8);
+}
+
+.tt-star-2 {
+  opacity: 0.7;
+  transform: translate(-12.9px, 1.6px) scale(0.8);
+}
+
+[data-theme="dark"] .tt-star {
+  transform: none;
+}
+
+[data-theme="dark"] .tt-star-1 {
+  transition-delay: 240ms;
+}
+
+[data-theme="dark"] .tt-star-2 {
+  transition-delay: 320ms;
 }
 
 .theme-toggle:hover {
   color: var(--ink);
   border-color: var(--line-strong);
+}
+
+/* Pressing the sky, in miniature — same give as the exhibit's button. */
+.theme-toggle:active {
+  transform: scale(0.94);
 }
 
 .theme-toggle:focus-visible {

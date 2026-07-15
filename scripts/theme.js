@@ -11,10 +11,17 @@
 const root = document.documentElement;
 const toggle = document.querySelector(".theme-toggle");
 
-/* The button is labeled with the theme you'd SWITCH TO, not the one
-   you're in — a button describes the action it performs. */
+/* The button carries no text — its content is the morphing sun/moon
+   icon, and the icon IS the state (base.css keys the two poses off
+   the data-theme attribute this script flips). If a page ever wants a
+   text label again, it goes in a .tt-label span so writing it can't
+   wipe out the svg. */
+const label = toggle.querySelector(".tt-label");
+
 function updateLabel() {
-  toggle.textContent = root.dataset.theme === "dark" ? "light" : "dark";
+  if (label) {
+    label.textContent = root.dataset.theme === "dark" ? "light" : "dark";
+  }
 }
 
 toggle.addEventListener("click", () => {
