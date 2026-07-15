@@ -282,14 +282,40 @@
     }
 
     /* --- Caption ---------------------------------------------------------
-       Quiet mono metadata under the exhibit, like a specimen label. */
+       Quiet mono metadata under the exhibit, like a specimen label.
+
+       Both words are always in the DOM, stacked in the same grid cell;
+       the theme decides which one is home. Swapping textContent would
+       snap — instead the leaving word smears upward through a blur
+       while the arriving one sharpens into place from the other side,
+       so the label reads like one word morphing, not two frames. */
 
     .sky-label {
+      display: grid;
+      justify-items: center;
       font-family: var(--font-mono);
       font-size: var(--text-xs);
       color: var(--ink-muted);
       user-select: none;
       transition: color 500ms ease; /* rides the paper's crossfade */
+    }
+
+    .sky-word {
+      grid-area: 1 / 1; /* both words share the cell; the cell keeps the
+                           wider word's width, so nothing reflows */
+      /* Fade out, THEN fade in — never both at once. The delay here
+         belongs to the ARRIVING word (this rule matches the visible
+         state): it waits for the leaving word to finish its fade
+         before starting its own. ease-in-out keeps both ends of each
+         fade soft — no hard edge when a fade starts or lands. */
+      transition: opacity 140ms ease-in-out 140ms;
+    }
+
+    /* The leaving word drops the delay and goes first, immediately. */
+    .sky-label.is-moon .sky-word-sun,
+    .sky-label:not(.is-moon) .sky-word-moon {
+      opacity: 0;
+      transition-delay: 0ms;
     }
   </style>
 </head>
@@ -360,7 +386,10 @@
 
     <!-- aria-hidden: the button's label already tells the whole story;
          announcing this too would say everything twice. -->
-    <p class="sky-label" aria-hidden="true">sun</p>
+    <p class="sky-label" aria-hidden="true">
+      <span class="sky-word sky-word-sun">sun</span>
+      <span class="sky-word sky-word-moon">moon</span>
+    </p>
   </main>
 
   <script>
@@ -374,7 +403,9 @@
       const isMoon = root.dataset.theme === "dark";
       toggle.classList.toggle("is-moon", isMoon);
       toggle.setAttribute("aria-pressed", String(isMoon));
-      label.textContent = isMoon ? "moon" : "sun";
+      /* the class drives the caption's blur-morph in CSS — both words
+         are always in the markup, so there's no text to swap */
+      label.classList.toggle("is-moon", isMoon);
     }
 
     toggle.addEventListener("click", () => {
@@ -388,6 +419,7 @@
        — you only see the animation when YOU flip the sky. */
     syncPose();
   </script>
+  <script src="../../scripts/haptics.js"></script>
 
 </body>
 </html>
