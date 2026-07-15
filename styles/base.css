@@ -565,6 +565,8 @@ a:focus-visible {
   position: absolute;
   top: var(--space-3);
   right: var(--space-3);
+  z-index: 1; /* the preview's dot layer is positioned too and comes later
+                 in the DOM — without this the dots paint over the tag */
   font-family: var(--font-mono);
   font-size: var(--text-xs);
   line-height: 1;
@@ -574,6 +576,41 @@ a:focus-visible {
   border-radius: 999px;
   padding: var(--space-1) var(--space-2);
   opacity: 0.8;
+}
+
+/* The "interactive" tag hints that it responds: hovering it lets a
+   faint rainbow drift through the LETTERS, flowing left to right.
+   The gradient is clipped to the text and slides underneath it the
+   whole time — it never pauses, so whenever the tint fades in the
+   colors are already mid-flight, and on the way out they keep moving
+   under the returning ink instead of freezing (the same dissolve-in-
+   motion exit the octo stars use). What actually animates on hover is
+   the solid ink painted on top: opaque at rest, half-clear on hover,
+   so the rainbow shows through as a tint, never full saturation.
+   The fade runs on its own 400ms clock — the token speeds are micro
+   feedback, too quick to read as an entrance. The gradient starts and
+   ends on the same hue, so each 200% slide loops seamlessly. */
+.card-tag-rainbow {
+  background: linear-gradient(90deg,
+    #ff6b6b, #ffb56b, #ffe66b, #6bff8f, #6bc8ff, #b06bff, #ff6b6b);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: var(--ink-muted); /* opaque ink hides the rainbow */
+  transition: -webkit-text-fill-color 400ms ease;
+  animation: tag-rainbow-drift 2.5s linear infinite;
+}
+
+.card-tag:hover .card-tag-rainbow {
+  /* 55% ink stays on top — the rainbow reads as a tint, not a paint job */
+  -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted) 55%, transparent);
+}
+
+/* Negative percentages shift the image rightward; -200% is exactly one
+   image width at this background-size, so the loop has no seam. */
+@keyframes tag-rainbow-drift {
+  from { background-position: 0% 0; }
+  to   { background-position: -200% 0; }
 }
 
 .card-preview {
