@@ -412,6 +412,44 @@
        — you only see the animation when YOU flip the sky. */
     syncPose();
 
+    function settleSkyTransitions() {
+      document.getAnimations().forEach((anim) => {
+        if (anim.transitionProperty) anim.cancel();
+      });
+    }
+
+    /* Stop the morph before the document is frozen. Repairing it only
+       after a back/forward-cache restore is too late in Chromium-based
+       browsers: the first restored frame may still carry the old border,
+       label color, or icon pose. */
+    function prepareSkyForSuspension() {
+      clearTimeout(labelTimer);
+      settleSkyTransitions();
+    }
+
+    window.addEventListener("pagehide", prepareSkyForSuspension);
+
+    /* Re-sync first, then cancel. Changing the theme and .is-moon class
+       can create fresh transitions of its own, and those must also land
+       immediately when the page is being restored. */
+    window.addEventListener("pageshow", () => {
+      clearTimeout(labelTimer);
+      root.dataset.theme = localStorage.getItem("theme") || root.dataset.theme;
+      syncPose();
+      settleSkyTransitions();
+    });
+
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "hidden") {
+        prepareSkyForSuspension();
+        return;
+      }
+
+      root.dataset.theme = localStorage.getItem("theme") || root.dataset.theme;
+      syncPose();
+      settleSkyTransitions();
+    });
+
     /* --- Cursor jiggle ----------------------------------------------------
        The rays and stars aren't wired to a canned hover animation —
        each one is a tiny spring-mounted body the cursor physically
