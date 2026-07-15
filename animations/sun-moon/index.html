@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sun to moon · mihneaptu/lab</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧪</text></svg>">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Spline+Sans+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+  <!-- Sets the theme BEFORE the page paints, so there's no flash of the
+       wrong colors. Your last choice wins; otherwise the OS preference. -->
+  <script>
+    document.documentElement.dataset.theme =
+      localStorage.getItem("theme") ||
+      (matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+  </script>
+
+  <link rel="stylesheet" href="../../styles/tokens.css">
+  <link rel="stylesheet" href="../../styles/base.css">
+
+  <style>
+    /* A single specimen, centered on the page like an exhibit. */
+    body {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: var(--space-8) var(--space-6) var(--space-6);
+    }
+
+    .sky-specimen {
+      display: grid;
+      justify-items: center;
+      row-gap: var(--space-5);
+    }
+
+    /* --- The toggle ------------------------------------------------------
+       A round button that holds the icon — styled like a piece of lab
+       chrome (surface, hairline border), not like the primary .btn. */
+
+    .sky-toggle {
+      /* The morph's shared clock. One ease for everything keeps the
+         disc, rays, and mask feeling like a single object transforming
+         instead of three animations that happen to run at once.
+         A symmetric ease-in-out, NOT an exponential ease-out: an
+         exponential curve finishes ~70% of the travel in the first
+         tenth of a second, so the rays looked like they blinked out
+         rather than plunged in. This curve spends its speed in the
+         middle, where the eye can actually watch the parts travel. */
+      --sky-ease: cubic-bezier(0.65, 0, 0.35, 1);
+      --sky-time: 400ms;
+
+      width: 176px;
+      height: 176px;
+      display: grid;
+      place-items: center;
+      color: var(--ink); /* the svg draws with currentColor */
+      background-color: var(--surface);
+      background-image: radial-gradient(var(--line) 1px, transparent 1px);
+      background-size: 14px 14px;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      box-shadow: var(--shadow-sm);
+      cursor: pointer;
+      transition: border-color var(--speed-color) ease,
+                  box-shadow var(--speed-color) ease,
+                  transform var(--speed-move) ease;
+    }
+
+    .sky-toggle:hover {
+      border-color: var(--line-strong);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Pressing the sky: the whole button gives slightly under the
+       finger, like a physical switch. */
+    .sky-toggle:active {
+      transform: scale(0.97);
+    }
+
+    .sky-toggle:focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+
+    /* --- The icon --------------------------------------------------------
+       One svg, three moving parts:
+
+         .disc — the sun's body, a filled circle.
+         .rays — eight short lines around it.
+         .bite — an invisible circle inside a <mask>, parked off-canvas.
+
+       The moon is never drawn. It's what's LEFT of the sun's disc after
+       the bite slides over it: the mask's white rectangle keeps the disc
+       visible, and wherever the black bite circle overlaps, the disc is
+       punched out. Slide the bite across one edge and a crescent remains. */
+
+    .sky-icon {
+      width: 72px;
+      height: 72px;
+      transition: transform 250ms var(--sky-ease);
+    }
+
+    /* Anticipation: hovering the resting sun eases the icon a few
+       degrees clockwise — the same direction the morph will spin —
+       like a switch taking up slack before it flips. Only the rays
+       visibly move (the disc is a circle), and only in the sun state:
+       a nudged crescent would just look broken. */
+    .sky-toggle:not(.is-moon):hover .sky-icon {
+      transform: rotate(10deg);
+    }
+
+    /* transform-box: view-box makes "center" mean the middle of the
+       24x24 viewBox (12,12) — the point the disc grows from and the
+       rays rotate around. Without it, each line would use its own
+       tiny bounding box and the rays would spin in place. */
+    .disc,
+    .rays {
+      transform-box: view-box;
+      transform-origin: center;
+    }
+
+    /* The three parts share one clock and one ease but start staggered,
+       so each motion hands off to the next and the whole thing reads
+       as ONE object transforming. The delays below are the moon→sun
+       direction (the crescent heals, the disc shrinks, the rays climb
+       back out last); the .is-moon block flips the order. */
+
+    .bite {
+      transition: transform var(--sky-time) var(--sky-ease);
+    }
+
+    .disc {
+      transition: transform var(--sky-time) var(--sky-ease) 40ms;
+    }
+
+    /* The rays run on a slightly quicker clock than the other parts.
+       This is what lets everything play AT THE SAME TIME: the bite's
+       hole sweeps right through the space the right ray is retreating
+       from, so the rays must always be one step ahead of it — faster,
+       not earlier, keeps the whole morph simultaneous. */
+    .rays {
+      transition: transform calc(var(--sky-time) - 80ms) var(--sky-ease) 140ms;
+    }
+
+    /* --- The moon state --------------------------------------------------
+       Sun → moon: the rays plunge inward and are swallowed by the
+       swelling disc, then the bite slides in from the top-right to
+       carve the crescent. Going back, the disc heals and shrinks, and
+       the rays climb back out of it. */
+
+    .sky-toggle.is-moon .rays {
+      /* No fade: the rays are drawn UNDER the disc in the same color,
+         so shrinking them toward the center makes the swelling disc
+         swallow them whole. The rotation turns the plunge into a
+         turn of the sky — clockwise, sweeping toward the hollow the
+         bite is about to carve. (scale 0.25 parks them well inside
+         r=6, safely covered even before the disc finishes growing.) */
+      transform: rotate(45deg) scale(0.25);
+      transition-delay: 0ms; /* the rays lead going to the moon... */
+    }
+
+    .sky-toggle.is-moon .disc {
+      /* r=6 scaled 1.75x reads as a proper moon; still inside the box. */
+      transform: scale(1.75);
+      transition-delay: 40ms; /* ...the disc swells as they sink in... */
+    }
+
+    .sky-toggle.is-moon .bite {
+      /* Parked at cx=33, this lands the bite at (17.3,10.5) — about
+         5.5 units off the disc's center, leaving a crescent ~7 units
+         thick that opens toward the top-right.
+         Starts almost with the rays, so the crescent is carving at the
+         exact time they rotate in — one simultaneous morph. The rays'
+         quicker clock (above) is what keeps them clear of the hole. */
+      transform: translate(-15.7px, 0);
+      transition-delay: 60ms;
+    }
+
+    /* Going back (moon → sun) the base rules above already reverse
+       everything; the 60ms delay on .rays means the crescent heals
+       first and the rays pop out a beat later. */
+
+    /* --- The stars --------------------------------------------------------
+       The payoff: once the crescent has settled, two small stars pop
+       into the hollow it carved — the moon state becomes "night", not
+       just an end pose. They arrive late and staggered, but leave
+       instantly and fast, so the sky is clear before the sun returns. */
+
+    .star {
+      transform-box: fill-box;
+      transform-origin: center;
+      transform: scale(0);
+      opacity: 0;
+      transition: transform 150ms var(--sky-ease),
+                  opacity 150ms ease;
+    }
+
+    .sky-toggle.is-moon .star {
+      transform: scale(1);
+      transition: transform 250ms var(--sky-ease),
+                  opacity 250ms ease;
+    }
+
+    .sky-toggle.is-moon .star-1 {
+      opacity: 0.9;
+      transition-delay: 480ms;
+    }
+
+    .sky-toggle.is-moon .star-2 {
+      opacity: 0.7; /* a touch dimmer — reads as farther away */
+      transition-delay: 590ms;
+    }
+
+    /* --- Caption ---------------------------------------------------------
+       Quiet mono metadata under the exhibit, like a specimen label. */
+
+    .sky-label {
+      font-family: var(--font-mono);
+      font-size: var(--text-xs);
+      color: var(--ink-muted);
+      user-select: none;
+    }
+  </style>
+</head>
+<body>
+
+  <a class="back-link" href="../../index.html">&larr; back</a>
+
+  <main class="sky-specimen">
+    <!-- Not just a demo: this button is the page's real theme switch.
+         Sun = light theme, moon = dark theme, saved the same way the
+         header toggle on other pages saves it (localStorage), so the
+         choice follows you around the lab. -->
+    <button
+      class="sky-toggle"
+      type="button"
+      aria-pressed="false"
+      aria-label="Switch color theme"
+    >
+      <svg class="sky-icon" viewBox="0 0 24 24" aria-hidden="true">
+        <mask id="crescent-mask">
+          <!-- White = keep, black = punch out. The rect keeps the whole
+               drawing; the bite circle waits off the right edge — far
+               enough out (cx=33) that its hole can't clip the right
+               ray, which the mask now covers too.
+               The bite is nearly as big as the swollen disc (r=9 vs
+               r=10.5) on purpose: crescent thickness is what's LEFT
+               between two circle edges, so a small bite can only carve
+               a fat stub — a slim crescent needs a near-twin circle
+               shifted slightly off center. -->
+          <rect x="0" y="0" width="24" height="24" fill="white" />
+          <circle class="bite" cx="33" cy="10.5" r="9" fill="black" />
+        </mask>
+
+        <!-- One mask over the whole drawing, and the rays BEFORE the
+             disc so they render underneath it. Both choices serve the
+             swallow: rays shrinking toward the center slip in behind
+             the disc (same color, so the overlap is invisible), and
+             the mask makes sure the bite's hole doesn't become a
+             window that shows the swallowed rays hiding inside. -->
+        <g mask="url(#crescent-mask)">
+          <g class="rays" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="12" y1="1"     x2="12"    y2="3" />
+            <line x1="12" y1="21"    x2="12"    y2="23" />
+            <line x1="1"  y1="12"    x2="3"     y2="12" />
+            <line x1="21" y1="12"    x2="23"    y2="12" />
+            <line x1="4.22"  y1="4.22"  x2="5.64"  y2="5.64" />
+            <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+            <line x1="4.22"  y1="19.78" x2="5.64"  y2="18.36" />
+            <line x1="18.36" y1="5.64"  x2="19.78" y2="4.22" />
+          </g>
+
+          <circle class="disc" cx="12" cy="12" r="6" fill="currentColor" />
+        </g>
+
+        <!-- Two tiny stars for the moon's sky, sitting in the hollow
+             the bite carves out. They live OUTSIDE the masked group on
+             purpose: that hollow is exactly where the mask punches the
+             drawing away, so inside the group they'd be erased too. -->
+        <g class="stars" fill="currentColor">
+          <circle class="star star-1" cx="18.6" cy="7.2" r="0.9" />
+          <circle class="star star-2" cx="20.8" cy="12.6" r="0.6" />
+        </g>
+      </svg>
+    </button>
+
+    <!-- aria-hidden: the button's label already tells the whole story;
+         announcing this too would say everything twice. -->
+    <p class="sky-label" aria-hidden="true">sun</p>
+  </main>
+
+  <script>
+    const root = document.documentElement;
+    const toggle = document.querySelector(".sky-toggle");
+    const label = document.querySelector(".sky-label");
+
+    /* One source of truth: the theme decides the pose, never the other
+       way around. The icon just reads data-theme and dresses to match. */
+    function syncPose() {
+      const isMoon = root.dataset.theme === "dark";
+      toggle.classList.toggle("is-moon", isMoon);
+      toggle.setAttribute("aria-pressed", String(isMoon));
+      label.textContent = isMoon ? "moon" : "sun";
+    }
+
+    toggle.addEventListener("click", () => {
+      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
+      localStorage.setItem("theme", root.dataset.theme);
+      syncPose();
+    });
+
+    /* If you arrive in dark mode, wake up as the moon. This runs before
+       the first paint, so the pose is applied without playing the morph
+       — you only see the animation when YOU flip the sky. */
+    syncPose();
+  </script>
+
+</body>
+</html>
