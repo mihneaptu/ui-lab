@@ -14,6 +14,9 @@
 *::before,
 *::after {
   box-sizing: border-box; /* width includes padding+border — the sane model */
+  -webkit-tap-highlight-color: transparent; /* mobile browsers flash a blue
+     overlay on anything tappable; the lab's own :active states are the
+     touch feedback here */
 }
 
 body,
