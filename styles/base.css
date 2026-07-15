@@ -146,6 +146,7 @@ a:focus-visible {
    like part of the wordmark rather than a control. */
 .wordmark .octo {
   align-self: center; /* the logo is centered on the text, not baseline-set */
+  position: relative; /* lifts the cat above the hold box so it stays clickable */
   background: none;
   border: 0;
   padding: 0;
@@ -172,17 +173,53 @@ a:focus-visible {
   transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-/* The open state holds while the pointer is on the name, the line, or
-   the cat itself — otherwise the act would reverse the moment you leave
-   "mihneaptu" and the cat could never be reached, let alone clicked.
-   :has() lets the container watch all three triggers at once. */
-.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .tick {
+/* The safety net for fast pointers: everything between the name and
+   the cat is a MOVING target while the act plays — the "/" rotates its
+   own hit-box out from under a pointer parked on its edge, and a sweep
+   toward the cat crosses the collapsing "lab" box, which was never a
+   trigger. Either way :has() goes false mid-act and the whole thing
+   reverses under the cursor, which reads as flicker.
+
+   The hold box is the fix: an invisible span pinned over the "/" → cat
+   corridor that NEVER moves. At rest it's pointer-events: none, so it
+   can't block clicking "lab" or start the act by itself; the moment a
+   real trigger opens the act (rule further down) it turns hit-testable
+   and latches the open state for as long as the pointer stays anywhere
+   in the corridor — a stable floor under all the moving scenery. It
+   sits above "lab" (absolute > static) but below the cat (relative,
+   later sibling), so the cat keeps its hover and its click.
+
+   Geometry is in the wordmark's own mono ch: the name is 9 characters,
+   so the corridor starts just before the "/" and runs a bit past where
+   the tail of "lab" rests — the whole stretch a pointer crosses. The
+   letter-spacing makes 9ch land a hair short, which only tucks the
+   start deeper under the name: covering the name's tail while open is
+   harmless, the hold itself keeps the act latched there. */
+.octo-hold {
+  position: absolute;
+  top: -0.2em;    /* a little taller than the text line — forgiving, */
+  bottom: -0.2em; /* like the fanned-out star lanes above the logo   */
+  left: 8.5ch;
+  width: 7ch;
+  pointer-events: none;
+}
+
+/* The open state holds while the pointer is on the name, the line,
+   the cat itself, or the hold box — otherwise the act would reverse
+   the moment you leave "mihneaptu" and the cat could never be
+   reached, let alone clicked. :has() lets the container watch all
+   the triggers at once. */
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) .octo-hold {
+  pointer-events: auto; /* arm the latch only while the act is open */
+}
+
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) .tick {
   transform: rotate(-20deg); /* counter-clockwise stands "/" up into "|" */
   /* exit timing: straighten right away */
   transition: transform 0.25s cubic-bezier(0.32, 0.72, 0, 1);
 }
 
-.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) a.home {
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) a.home {
   max-width: 0;
   /* exit timing: the box starts closing while the tail of "lab" is
      still being absorbed, so the logo emerges right at the line
@@ -190,14 +227,14 @@ a:focus-visible {
   transition: max-width 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0.28s;
 }
 
-.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) a.home span {
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) a.home span {
   transform: translateX(-110%); /* fully past the clip edge, i.e. the line */
   /* exit timing: the visible journey through the line. An almost-even
      curve so the travel can be seen, not a snap. */
   transition: transform 0.4s cubic-bezier(0.45, 0.05, 0.35, 0.95) 0.03s;
 }
 
-.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .octo {
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) .octo {
   max-width: 1.3em;
   /* exit timing: opens while the last letter is still being swallowed —
      overlapping the stages is what keeps the act tight without losing
@@ -205,7 +242,7 @@ a:focus-visible {
   transition: max-width 0.2s cubic-bezier(0.32, 0.72, 0, 1) 0.3s;
 }
 
-.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover) .octo svg {
+.wordmark:has(a:first-child:hover, .tick:hover, .octo:hover, .octo-hold:hover) .octo svg {
   transform: translateX(0);
   /* exit timing: the logo walks out of the line, left to right, starting
      right as the tail of "lab" disappears into it */
@@ -347,6 +384,9 @@ a:focus-visible {
   display: block;
   width: 1.25em;
   height: 1.25em;
+  /* the sunrise overshoot pokes the ray caps a hair past the
+     viewBox — let them, instead of clipping them flat */
+  overflow: visible;
 }
 
 .tt-disc,
@@ -355,69 +395,51 @@ a:focus-visible {
   transform-origin: center;
 }
 
-/* Sun pose (light theme) — these transitions time the RETURN to sun */
+/* The chip runs the exhibit's exact choreography at ~60% of its clock:
+   motion across 16px reads far slower than the same motion across
+   176px, so at full duration the little moon feels like it's dragging.
+   Same sequence, same proportions, smaller stage, faster tempo. */
+
+/* Sun pose (light theme) — these transitions time the RETURN to sun.
+   The rays' ease overshoots a hair at sunrise, same as the exhibit. */
 .tt-rays {
-  transition: transform 320ms cubic-bezier(0.65, 0, 0.35, 1) 140ms;
+  transition: transform 200ms cubic-bezier(0.34, 1.3, 0.64, 1) 85ms;
 }
 
 .tt-disc {
-  transition: transform 400ms cubic-bezier(0.65, 0, 0.35, 1) 40ms;
+  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 25ms;
 }
 
 .tt-bite {
-  transition: transform 400ms cubic-bezier(0.65, 0, 0.35, 1) 0ms;
+  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 0ms;
 }
 
 /* Moon pose (dark theme) + the arrival timing: rays lead and land,
-   THEN the bite carves — held back 140ms so its notch doesn't show on
-   the right rim while the left rays still have the longest journey. */
+   THEN the bite carves — held back so its notch doesn't show on the
+   right rim while the left rays still have the longest journey. */
 [data-theme="dark"] .tt-rays {
   transform: rotate(45deg) scale(0.25);
-  transition-duration: 280ms;
+  transition-duration: 170ms;
   transition-delay: 0ms;
 }
 
 [data-theme="dark"] .tt-disc {
   transform: scale(1.75);
-  transition-delay: 40ms;
+  /* outlasts the bite so the crescent is carved from a still-growing
+     body — grow-and-carve as one event, not grow, stop, carve */
+  transition-duration: 360ms;
+  transition-delay: 25ms;
 }
 
 [data-theme="dark"] .tt-bite {
   transform: translate(-15.7px, 0);
-  transition-delay: 140ms;
+  transition-duration: 240ms;
+  transition-delay: 85ms;
 }
 
-/* The chip's stars, same life as the exhibit's: home is inside the
-   crescent's flesh (ink on ink, invisible — a spot that also hides
-   inside the small sun disc), the night sky releases them, and the
-   day has the moon eat them back at the same speed. */
-.tt-star {
-  transform-box: fill-box;
-  transform-origin: center;
-  transition: transform 280ms cubic-bezier(0.65, 0, 0.35, 1);
-}
-
-.tt-star-1 {
-  opacity: 0.9;
-  transform: translate(-11.2px, 5.8px) scale(0.8);
-}
-
-.tt-star-2 {
-  opacity: 0.7;
-  transform: translate(-12.9px, 1.6px) scale(0.8);
-}
-
-[data-theme="dark"] .tt-star {
-  transform: none;
-}
-
-[data-theme="dark"] .tt-star-1 {
-  transition-delay: 240ms;
-}
-
-[data-theme="dark"] .tt-star-2 {
-  transition-delay: 320ms;
-}
+/* The exhibit's stars stay on the exhibit — at chip size they read
+   as specks, and the chrome should whisper. The crescent alone says
+   "night" just fine here. */
 
 .theme-toggle:hover {
   color: var(--ink);
@@ -557,8 +579,7 @@ a:focus-visible {
 .card-preview {
   /* A miniature stage inside the card. pointer-events: none so the
      preview buttons are scenery, not controls — the whole card is the link. */
-  background-image: radial-gradient(var(--line) 1px, transparent 1px);
-  background-size: 14px 14px;
+  position: relative; /* anchors the dot-grid layer below */
   border-bottom: 1px solid var(--line);
   padding: var(--space-5);
   display: flex;
@@ -567,6 +588,27 @@ a:focus-visible {
   gap: var(--space-2);
   min-height: 108px;
   pointer-events: none;
+}
+
+/* The dot grid on its own layer, as a solid color with the dot pattern
+   punched out by a mask. A background-image gradient can't transition,
+   so it would snap during the theme crossfade below; a background-COLOR
+   fades like everything else, and the mask never changes. */
+.card-preview::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-color: var(--line);
+  -webkit-mask-image: radial-gradient(#000 1px, transparent 1px);
+  -webkit-mask-size: 14px 14px;
+  mask-image: radial-gradient(#000 1px, transparent 1px);
+  mask-size: 14px 14px;
+}
+
+/* Positioned pseudo-elements paint above static children, so the
+   miniature specimens need a lift to stay above the dot layer. */
+.card-preview > * {
+  position: relative;
 }
 
 .card-body {
@@ -599,6 +641,51 @@ a:focus-visible {
   justify-content: space-between;
   gap: var(--space-4);
   flex-wrap: wrap;
+}
+
+/* --- Theme crossfade ---------------------------------------------------------
+   The sun-moon chip doesn't snap the lab to the other theme — the whole
+   page crossfades on the morph's own 500ms clock, exactly like the
+   playground exhibit. theme.js pins .theme-fading on <html> for the
+   duration of a flip; while it's there, every themed color rides the
+   slow clock. Scoped to a class (not permanent) so hover and press
+   feedback keep their fast micro-interaction speeds the rest of the
+   time. The chip's icon parts are excluded: they animate TRANSFORMS,
+   and this blanket shorthand would wipe those transitions mid-morph. */
+
+@media (prefers-reduced-motion: no-preference) {
+  /* Non-inherited paints (backgrounds, borders, shadows) are safe to
+     fade on every element — each one animates its own value once. */
+  html.theme-fading *:not(.tt-sky):not(.tt-sky *),
+  html.theme-fading *::before,
+  html.theme-fading *::after {
+    transition: background-color 500ms ease,
+                border-color 500ms ease,
+                box-shadow 500ms ease,
+                fill 500ms ease,
+                stroke 500ms ease !important;
+  }
+
+  /* color is different: it INHERITS. Give every element a color
+     transition and nested text stops inheriting the animated value —
+     each child instead starts its own transition toward its parent's
+     current frame, every frame, so deep text trails its parent and
+     shimmers (the wordmark flickered exactly like this). Only the
+     elements that SET an explicit color transition it; everyone below
+     them inherits the in-flight value directly and moves in lockstep.
+     That's also why plain `a` must NOT be here: the wordmark's links
+     use color: inherit, and giving them their own transition restarts
+     the chase one level down. */
+  html.theme-fading :is(body, .wordmark, .tick, .theme-toggle,
+      .back-link, .component-card, .card-tag, .card-meta, .btn,
+      .specimen-label, .lab-footer):not(.tt-sky):not(.tt-sky *) {
+    transition: color 500ms ease,
+                background-color 500ms ease,
+                border-color 500ms ease,
+                box-shadow 500ms ease,
+                fill 500ms ease,
+                stroke 500ms ease !important;
+  }
 }
 
 /* --- Accessibility ----------------------------------------------------------

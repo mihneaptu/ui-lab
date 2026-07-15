@@ -58,9 +58,25 @@
 
   /* Shadows are for elevation, not decoration. Soft and barely-there:
      if you notice the shadow itself, it's too strong. Defined here (not
-     in SHAPE & DEPTH) because they change with the theme. */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.07), 0 8px 24px rgba(0, 0, 0, 0.06);
+     in SHAPE & DEPTH) because they change with the theme.
+     Three steps, by object size: sm for chips, md for cards, lg for
+     large exhibit pieces — big objects need bigger, softer shadows or
+     they look pasted on rather than resting. */
+  /* Each shadow leads with an invisible inset layer. It does nothing
+     in the light theme — it's there so the list SHAPE matches the dark
+     theme's (which uses that slot for its lit top rim): CSS can only
+     crossfade two shadows smoothly when their lists line up layer for
+     layer, inset with inset. Without the placeholder, every theme
+     switch would snap the shadows instead of fading them. */
+  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0),
+               0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0),
+               0 2px 6px rgba(0, 0, 0, 0.07),
+               0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0),
+               0 2px 4px rgba(0, 0, 0, 0.05),
+               0 12px 24px rgba(0, 0, 0, 0.07),
+               0 32px 64px rgba(0, 0, 0, 0.08);
 
   /* ------------------------------------------------------------------
      TYPE
@@ -155,7 +171,18 @@
   /* The stars' gold, a notch brighter so it reads on the dark paper */
   --gold: #facc15;
 
-  /* Shadows barely read on dark backgrounds, so they lean a bit heavier */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 2px 6px rgba(0, 0, 0, 0.45), 0 8px 24px rgba(0, 0, 0, 0.35);
+  /* Dark shadows can't read on a dark floor — black on near-black is
+     invisible. So elevation flips with the light (see the note above:
+     raised means CATCHES MORE LIGHT): each step pairs a faint top edge
+     highlight — the rim where an object catches the room's light — with
+     the dark spread below. The higher the step, the brighter the rim. */
+  --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.04),
+               0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+               0 2px 6px rgba(0, 0, 0, 0.45),
+               0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.09),
+               0 2px 4px rgba(0, 0, 0, 0.5),
+               0 12px 24px rgba(0, 0, 0, 0.4),
+               0 32px 64px rgba(0, 0, 0, 0.35);
 }

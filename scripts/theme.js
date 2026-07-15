@@ -24,7 +24,19 @@ function updateLabel() {
   }
 }
 
+/* The flip doesn't snap: .theme-fading puts the whole page's colors on
+   the morph's 500ms clock (see base.css) for just the duration of the
+   change, then comes off so hover feedback stays fast. The timer is
+   cleared on rapid clicks so the class can't be removed mid-fade. */
+let fadeTimer;
+
 toggle.addEventListener("click", () => {
+  root.classList.add("theme-fading");
+  window.clearTimeout(fadeTimer);
+  fadeTimer = window.setTimeout(() => {
+    root.classList.remove("theme-fading");
+  }, 600);
+
   root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
   localStorage.setItem("theme", root.dataset.theme);
   updateLabel();
