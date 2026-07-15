@@ -1,7 +1,7 @@
 # mihneaptu/lab
 
 A minimal, monochrome playground for UI animations. Each page under
-[`animations/`](animations/) holds one hand-built effect — no frameworks,
+[`animations/`](animations/) holds one hand-built effect: no frameworks,
 no build step, just HTML and CSS.
 
 **Live site:** https://mihneaptu.github.io/ui-lab/
@@ -11,7 +11,7 @@ no build step, just HTML and CSS.
 | Experiment | Notes |
 | --- | --- |
 | [Melting button](animations/melting-button/index.html) | A button that melts on hover, shown as a side-by-side comparison of two implementations |
-| [Sun to moon](animations/sun-moon/index.html) | A sun that morphs into a moon on click — rays and stars ride spring physics, and the caption swaps ink mid-morph |
+| [Sun to moon](animations/sun-moon/index.html) | A sun that morphs into a moon on click. Rays and stars ride spring physics, and the caption swaps ink mid-morph |
 
 ## Running locally
 
@@ -29,7 +29,7 @@ python -m http.server 8000
 ## Project layout
 
 ```
-index.html            The lab homepage — a card per experiment
+index.html            The lab homepage, a card per experiment
 animations/           One folder per effect
 styles/               Shared design tokens and base styles
 scripts/              The tiny theme switcher
@@ -37,5 +37,5 @@ scripts/              The tiny theme switcher
 
 ## License
 
-[MIT](LICENSE) — every animation is a single dependency-free file, free to
+[MIT](LICENSE). Every animation is a single dependency-free file, free to
 take into your own projects.
