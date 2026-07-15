@@ -24,7 +24,10 @@
   <style>
     /* A single specimen, centered on the page like an exhibit. */
     body {
-      min-height: 100vh;
+      min-height: 100vh;  /* fallback for browsers without dvh */
+      min-height: 100dvh; /* the VISIBLE viewport on mobile — 100vh includes
+                             the space behind the retractable URL bar, which
+                             pushed the exhibit below true center */
       display: grid;
       place-items: center;
       padding: var(--space-8) var(--space-6) var(--space-6);

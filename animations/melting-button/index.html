@@ -25,17 +25,22 @@
   <style>
     /* A centered comparison stage with room for the fixed back link. */
     body {
-      min-height: 100vh;
+      min-height: 100vh;  /* fallback for browsers without dvh */
+      min-height: 100dvh; /* the VISIBLE viewport on mobile — 100vh includes
+                             the space behind the retractable URL bar, which
+                             pushed the stage below true center */
       display: grid;
       place-items: center;
       padding: var(--space-8) var(--space-6) var(--space-6);
     }
 
+    /* Mobile-first: the base is a single stacked column; the media query
+       further down adds the side-by-side layout once there's room. */
     .melt-comparison {
-      width: min(720px, calc(100vw - 64px));
+      width: min(320px, calc(100vw - 64px));
       display: grid;
-      grid-template-columns: repeat(2, minmax(0, 1fr));
-      column-gap: var(--space-8);
+      grid-template-columns: minmax(0, 1fr);
+      row-gap: var(--space-7);
       align-items: start;
     }
 
@@ -111,17 +116,30 @@
       transform: translate(-50%, 0);
     }
 
+    /* Touch screens have no hover, so there the caption is simply
+       always out — a printed annotation instead of a whispered one.
+       (hover: none) matches devices whose primary pointer can't hover,
+       i.e. phones and tablets; desktops keep the reveal. */
+    @media (hover: none) {
+      .melt-crunch {
+        opacity: 1;
+        transform: translate(-50%, 0);
+      }
+    }
+
     .melt-slot {
       height: 160px;
       display: grid;
       place-items: center;
     }
 
-    @media (max-width: 640px) {
+    /* Two columns side by side. row-gap from the base is harmless here:
+       one row means it never applies. */
+    @media (min-width: 640px) {
       .melt-comparison {
-        width: min(320px, calc(100vw - 64px));
-        grid-template-columns: minmax(0, 1fr);
-        row-gap: var(--space-7);
+        width: min(720px, calc(100vw - 64px));
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        column-gap: var(--space-8);
       }
     }
 
