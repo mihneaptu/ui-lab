@@ -703,15 +703,15 @@ a:focus-visible {
    landed with a visible pop ~500ms after the rest of the page. */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* The accent family rides a QUICK flip centered inside the slow
-     fade, not the full 500ms. The accent and its contrast swap ends
-     in opposite directions (dark pill/white label ↔ light pill/dark
-     label), so at some instant they MUST pass through each other —
-     on the slow clock that pass took ~110ms and the primary button's
-     label visibly melted into its pill. A 220ms flip starting at
-     140ms shrinks the pass to a blink, and it begins and ends while
-     the paper is still mid-crossfade, so it reads as part of the same
-     event rather than a separate snap. */
+  /* Every token rides the same 500ms clock — the whole lab is one
+     crossfade, no element on a clock of its own. (An earlier version
+     gave the accent family a quick centered flip so the primary
+     button's inverting label wouldn't dissolve through its pill
+     mid-fade — but a fast flip inside a slow fade reads as a snap,
+     which is worse. The dissolve is the honest cost of crossfading
+     an element that swaps polarity: for a beat at the middle the
+     button melts into the mid-gray world with everything else, then
+     re-emerges inverted.) */
   html.theme-fading {
     transition: --paper 500ms ease,
                 --surface 500ms ease,
@@ -719,11 +719,11 @@ a:focus-visible {
                 --ink-muted 500ms ease,
                 --line 500ms ease,
                 --line-strong 500ms ease,
-                --accent 220ms ease 140ms,
-                --accent-strong 220ms ease 140ms,
-                --accent-deep 220ms ease 140ms,
-                --accent-soft 220ms ease 140ms,
-                --accent-contrast 220ms ease 140ms,
+                --accent 500ms ease,
+                --accent-strong 500ms ease,
+                --accent-deep 500ms ease,
+                --accent-soft 500ms ease,
+                --accent-contrast 500ms ease,
                 --gold 500ms ease;
   }
 
