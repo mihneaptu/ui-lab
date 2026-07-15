@@ -289,7 +289,13 @@
       font-size: var(--text-xs);
       color: var(--ink-muted);
       user-select: none;
-      transition: color 500ms ease; /* rides the paper's crossfade */
+      /* No slow color fade here: the word swaps early in the morph
+         (100ms). The color flip must be DONE before that — CSS
+         transitions and setTimeout run on different clocks, and if
+         they aim at the same instant the swap can land a frame early,
+         flashing the new word in the old ink. Finishing at 80ms
+         leaves a safe gap. */
+      transition: color 80ms ease;
     }
   </style>
 </head>
@@ -393,7 +399,7 @@
       clearTimeout(labelTimer);
       labelTimer = setTimeout(() => {
         label.textContent = isMoon ? "moon" : "sun";
-      }, 200);
+      }, 100);
     });
 
     /* If you arrive in dark mode, wake up as the moon. This runs before
