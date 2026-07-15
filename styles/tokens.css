@@ -17,25 +17,10 @@
    are defined once and never repeated.
    ========================================================================== */
 
-/* Registering the color tokens tells the browser they ARE colors, not
-   opaque text. That's what makes them animatable: during a theme flip,
-   base.css puts a transition on these properties at the root, the token
-   VALUES interpolate, and every element reading var(--ink) etc. repaints
-   in perfect lockstep — no element needs a transition of its own.
-   (inherits: true is what unregistered custom properties already do;
-   initial-value is a required formality — :root always overrides it.) */
-@property --paper           { syntax: "<color>"; inherits: true; initial-value: #f4f4f3; }
-@property --surface         { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
-@property --ink             { syntax: "<color>"; inherits: true; initial-value: #1a1a1a; }
-@property --ink-muted       { syntax: "<color>"; inherits: true; initial-value: #6b6b6b; }
-@property --line            { syntax: "<color>"; inherits: true; initial-value: #e4e4e2; }
-@property --line-strong     { syntax: "<color>"; inherits: true; initial-value: #b0b0ad; }
-@property --accent          { syntax: "<color>"; inherits: true; initial-value: #262626; }
-@property --accent-strong   { syntax: "<color>"; inherits: true; initial-value: #111111; }
-@property --accent-deep     { syntax: "<color>"; inherits: true; initial-value: #000000; }
-@property --accent-soft     { syntax: "<color>"; inherits: true; initial-value: #eaeaea; }
-@property --accent-contrast { syntax: "<color>"; inherits: true; initial-value: #ffffff; }
-@property --gold            { syntax: "<color>"; inherits: true; initial-value: #eab308; }
+/* Keep these as ordinary inherited custom properties. A theme change swaps
+   their values atomically; the shared chrome animates between complete page
+   snapshots rather than interpolating ink, paper, and borders separately.
+   That keeps every visible region internally consistent throughout a flip. */
 
 :root {
 

@@ -683,79 +683,26 @@ a:focus-visible {
   flex-wrap: wrap;
 }
 
-/* --- Theme crossfade ---------------------------------------------------------
-   The sun-moon chip doesn't snap the lab to the other theme — the whole
-   page crossfades on the morph's own 500ms clock, exactly like the
-   playground exhibit. theme.js pins .theme-fading on <html> for the
-   duration of a flip.
-
-   The fade animates the TOKENS, not the elements: tokens.css registers
-   every color token with @property, so while this transition is live
-   the token values themselves interpolate at the root. Every element
-   reading var(--ink), var(--paper), … repaints from the same in-flight
-   value each frame — one clock, perfect lockstep, by construction. And
-   because no element's own `transition` is touched, every micro-
-   interaction (the wordmark's reveal act, the chip's morph, hover
-   lifts) keeps its own timing even mid-fade.
-
-   This replaced a blanket `* { transition: … !important }` approach,
-   which had two real bugs: the !important shorthand ERASED every
-   element's own transitions for the duration (the reveal act played
-   instantly during a flip), and the wordmark's color transition kept
-   restarting itself every frame, so it crawled at half speed and
-   landed with a visible pop ~500ms after the rest of the page. */
+/* --- Theme reveal ------------------------------------------------------------
+   Ink and paper reverse polarity between themes, so interpolating both
+   inevitably makes them the same gray halfway through. Instead, theme.js
+   captures the complete old and new pages and reveals the new one from the
+   sun/moon control. Every pixel is always part of one valid theme, which
+   keeps text, button labels, card borders, and backgrounds in lockstep. */
 
 @media (prefers-reduced-motion: no-preference) {
-  /* Every token rides the same 500ms clock — the whole lab is one
-     crossfade, no element on a clock of its own. (An earlier version
-     gave the accent family a quick centered flip so the primary
-     button's inverting label wouldn't dissolve through its pill
-     mid-fade — but a fast flip inside a slow fade reads as a snap,
-     which is worse. The dissolve is the honest cost of crossfading
-     an element that swaps polarity: for a beat at the middle the
-     button melts into the mid-gray world with everything else, then
-     re-emerges inverted.) */
-  html.theme-fading {
-    transition: --paper 500ms ease,
-                --surface 500ms ease,
-                --ink 500ms ease,
-                --ink-muted 500ms ease,
-                --line 500ms ease,
-                --line-strong 500ms ease,
-                --accent 500ms ease,
-                --accent-strong 500ms ease,
-                --accent-deep 500ms ease,
-                --accent-soft 500ms ease,
-                --accent-contrast 500ms ease,
-                --gold 500ms ease;
+  html.theme-transitioning::view-transition-old(root),
+  html.theme-transitioning::view-transition-new(root) {
+    animation: none;
+    mix-blend-mode: normal;
   }
 
-  /* The one thing token interpolation can't carry: the shadow tokens
-     are whole shadow LISTS (rgba literals per theme), not single
-     colors, so they can't register as <color> and would snap at the
-     flip. The lab's only shadowed chrome rides the change out with an
-     ordinary box-shadow transition — transform is listed too so the
-     card's hover lift keeps its own fast clock even mid-fade. */
-  html.theme-fading :is(.stage, .component-card) {
-    transition: box-shadow 500ms ease,
-                transform var(--speed-move) ease;
+  html.theme-transitioning::view-transition-old(root) {
+    z-index: 1;
   }
 
-  /* Elements with their own fast color transitions (hover feedback)
-     must NOT keep them while the tokens are animating: a transition
-     pointed at a moving target restarts every frame and only closes
-     a fraction of the gap each time, so the element trails the fade
-     and is still catching up after the page has settled (the button
-     preview sat mid-gray on a finished light page). For the fade's
-     duration they read the animating tokens raw — perfectly in step —
-     and keep only their movement transitions. Hover color feedback
-     during the 600ms window snaps; nobody can tell. */
-  html.theme-fading :is(.btn, .theme-toggle) {
-    transition: transform var(--speed-move) ease;
-  }
-
-  html.theme-fading :is(.back-link, .card-tag-rainbow) {
-    transition: none;
+  html.theme-transitioning::view-transition-new(root) {
+    z-index: 2;
   }
 }
 
