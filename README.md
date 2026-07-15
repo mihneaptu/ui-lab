@@ -33,7 +33,6 @@ index.html            The lab homepage — a card per experiment
 animations/           One folder per effect
 styles/               Shared design tokens and base styles
 scripts/              The tiny theme switcher
-docs/                 Design notes behind each experiment
 ```
 
 ## License

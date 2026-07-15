@@ -1,6 +1,2 @@
 # Playwright MCP screenshots and page snapshots from local testing
 .playwright-mcp/
-
-# Python test cache
-__pycache__/
-.pytest_cache/
