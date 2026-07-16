@@ -346,11 +346,13 @@
       color: var(--ink-muted);
       user-select: none;
       /* No slow color fade here: the word swaps early in the morph
-         (100ms). The color flip must be DONE before that — CSS
+         (130ms). The color flip must be DONE before that — CSS
          transitions and setTimeout run on different clocks, and if
          they aim at the same instant the swap can land a frame early,
-         flashing the new word in the old ink. Finishing at 80ms
-         leaves a safe gap. */
+         flashing the new word in the old ink. The ink fade starts a
+         couple of frames late (the script defers the theme flip by one
+         painted frame), so ~32ms + 80ms lands it around 112ms — still
+         a safe gap before the swap. */
       transition: color 80ms ease;
     }
   </style>
@@ -452,23 +454,48 @@
       label.textContent = isMoon ? "moon" : "sun";
     }
 
-    /* The word changes when the shape does: ~200ms into the 400ms morph
-       the crescent bite lands (going dark) / the rays are back (going
-       light), so that's the frame where the icon stops being the old
-       body — and the caption switches with it, no fade needed. */
+    /* The icon leads, the world follows one frame later. Flipping
+       data-theme restyles and repaints the WHOLE page in one go, and on
+       a phone that stall is long enough that the rays' 170ms plunge —
+       the only leg of the morph that starts at 0ms — lost its opening
+       frames and read as a blink. So the tap only starts the icon's
+       morph (cheap: one small svg), lets the browser paint that first
+       frame, and flips the theme on the one after. The sky still moves
+       with the sun — 16ms is far below what the eye can order — but
+       the stall now lands with the plunge already visibly in motion. */
+    let flipFrame;
     let labelTimer;
     toggle.addEventListener("click", () => {
-      root.dataset.theme = root.dataset.theme === "dark" ? "light" : "dark";
-      localStorage.setItem("theme", root.dataset.theme);
+      /* localStorage, not root.dataset, is the source of truth for
+         "current theme" here: with the world-flip deferred a frame, a
+         fast second tap could otherwise read the OLD theme back and
+         cancel itself out. */
+      const next =
+        (localStorage.getItem("theme") || root.dataset.theme) === "dark"
+          ? "light" : "dark";
+      localStorage.setItem("theme", next);
 
-      const isMoon = root.dataset.theme === "dark";
+      const isMoon = next === "dark";
       toggle.classList.toggle("is-moon", isMoon);
       toggle.setAttribute("aria-pressed", String(isMoon));
 
+      cancelAnimationFrame(flipFrame);
+      flipFrame = requestAnimationFrame(() => {
+        /* two rAFs, not one: the first fires BEFORE this frame paints,
+           so the flip would land in the same paint as the morph's
+           start; the second lands it cleanly in the frame after */
+        flipFrame = requestAnimationFrame(() => {
+          root.dataset.theme = next;
+        });
+      });
+
+      /* The word changes when the shape does: the crescent bite lands /
+         the rays return around the 150ms mark, so the caption switches
+         just before that, no fade needed. */
       clearTimeout(labelTimer);
       labelTimer = setTimeout(() => {
         label.textContent = isMoon ? "moon" : "sun";
-      }, 100);
+      }, 130);
     });
 
     /* If you arrive in dark mode, wake up as the moon. This runs before
@@ -485,9 +512,14 @@
     /* Stop the morph before the document is frozen. Repairing it only
        after a back/forward-cache restore is too late in Chromium-based
        browsers: the first restored frame may still carry the old border,
-       label color, or icon pose. */
+       label color, or icon pose. The deferred world-flip must land too:
+       rAF callbacks never fire in a hidden document, so a tap taken in
+       the instant before hiding would otherwise leave the sky in the
+       old theme with the icon already morphed. */
     function prepareSkyForSuspension() {
       clearTimeout(labelTimer);
+      cancelAnimationFrame(flipFrame);
+      root.dataset.theme = localStorage.getItem("theme") || root.dataset.theme;
       settleSkyTransitions();
     }
 
