@@ -232,8 +232,9 @@
        not earlier, keeps the whole morph simultaneous.
        Their ease has a small overshoot: at sunrise the rays stretch a
        hair past resting length and settle back — arrival with weight,
-       not interpolation. (Going to the moon the same overshoot lands
-       inside the disc, where nobody sees it.) */
+       not interpolation. (Nightfall does NOT inherit this ease — the
+       overshoot is an arrival move, and its front-loaded start made
+       the plunge read as a flick; see the .is-moon block.) */
     .rays {
       transition: transform calc(var(--sky-time) - 80ms)
                   cubic-bezier(0.34, 1.3, 0.64, 1) 140ms;
@@ -251,9 +252,19 @@
          swallow them whole. The rotation turns the plunge into a
          turn of the sky — clockwise, sweeping toward the hollow the
          bite is about to carve. (scale 0.25 parks them well inside
-         r=6, safely covered even before the disc finishes growing.) */
+         r=6, safely covered even before the disc finishes growing.)
+         240ms on the symmetric ease, not the base rule's 170ms on the
+         overshoot ease: that combination finished most of the travel
+         in the first few hundredths, which a 60Hz phone screen shows
+         as ~3 frames — a flick, not a plunge. The symmetric curve
+         spends its speed in the middle where the eye can follow it,
+         and the stretch is still safe: the rays' tips sink inside the
+         swelling disc by ~150ms, before the bite's notch touches the
+         rim (~170ms), and they finish (240ms) well ahead of the
+         carve (325ms) — still faster than the parts chasing them. */
       transform: rotate(45deg) scale(0.25);
-      transition-duration: 170ms;
+      transition-duration: 240ms;
+      transition-timing-function: var(--sky-ease);
       transition-delay: 0ms; /* the rays lead going to the moon... */
     }
 
