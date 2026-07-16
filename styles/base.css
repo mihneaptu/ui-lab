@@ -436,18 +436,43 @@ a:focus-visible {
    176px, so at full duration the little moon feels like it's dragging.
    Same sequence, same proportions, smaller stage, faster tempo. */
 
+/* Every delay below rides on --tt-hold (default 0ms): a whole-morph
+   hold that shifts the choreography in time without touching its
+   internal stagger. theme.js sets it per icon during a theme reveal,
+   to the moment the reveal's sweep arrives at THAT icon — so a
+   miniature far from the toggle (the homepage card) is uncovered
+   mid-morph instead of hiding its whole transformation under the
+   old-theme snapshot. The chip's own hold computes to 0ms: it sits
+   at the reveal's epicenter and morphs the moment it's clicked. */
+
 /* Sun pose (light theme) — these transitions time the RETURN to sun.
-   The rays' ease overshoots a hair at sunrise, same as the exhibit. */
+   The rays' scale keeps the sunrise overshoot (a hair past resting
+   length, same ease as the exhibit's rays). Their rotation rides its
+   own shorter clock — the individual scale/rotate properties let the
+   two motions transition separately — symmetric with nightfall's
+   100ms twist, so the unwind finishes while the rays are still under
+   the shrinking disc. On one shared clock the 45° unwind stretched
+   across the whole 200ms emergence, visibly outlasting the quick
+   twist that wound it up: readable on the exhibit's 176px stage,
+   drag at chip size. The exhibit itself keeps the classic combined
+   transform on purpose. */
 .tt-rays {
-  transition: transform 200ms cubic-bezier(0.34, 1.3, 0.64, 1) 85ms;
+  rotate: 0deg;
+  scale: 1;
+  transition: scale 200ms cubic-bezier(0.34, 1.3, 0.64, 1)
+              calc(var(--tt-hold, 0ms) + 85ms),
+              rotate 100ms cubic-bezier(0.65, 0, 0.35, 1)
+              calc(var(--tt-hold, 0ms) + 85ms);
 }
 
 .tt-disc {
-  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 25ms;
+  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1)
+              calc(var(--tt-hold, 0ms) + 25ms);
 }
 
 .tt-bite {
-  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 0ms;
+  transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1)
+              var(--tt-hold, 0ms);
 }
 
 /* Moon pose (dark theme) + the arrival timing: rays lead and land,
@@ -458,9 +483,12 @@ a:focus-visible {
    the snappy direction on the exhibit, and it must stay the snappy
    direction here too. */
 [data-theme="dark"] .tt-rays {
-  transform: rotate(45deg) scale(0.25);
+  rotate: 45deg;
+  scale: 0.25;
+  /* one duration/delay covers both clocks: going dark the twist and
+     the plunge travel together */
   transition-duration: 100ms;
-  transition-delay: 0ms;
+  transition-delay: var(--tt-hold, 0ms);
 }
 
 [data-theme="dark"] .tt-disc {
@@ -468,7 +496,7 @@ a:focus-visible {
   /* outlasts the bite so the crescent is carved from a still-growing
      body — grow-and-carve as one event, not grow, stop, carve */
   transition-duration: 215ms;
-  transition-delay: 15ms;
+  transition-delay: calc(var(--tt-hold, 0ms) + 15ms);
 }
 
 [data-theme="dark"] .tt-bite {
@@ -476,7 +504,7 @@ a:focus-visible {
   /* starts at half the rays' clock, same beat as the exhibit: the
      rays are most of the way home before the notch appears */
   transition-duration: 145ms;
-  transition-delay: 50ms;
+  transition-delay: calc(var(--tt-hold, 0ms) + 50ms);
 }
 
 /* The exhibit's stars stay on the exhibit — at chip size they read

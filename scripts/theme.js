@@ -87,6 +87,79 @@ function finishThemeTransition(transition) {
   if (activeThemeTransition !== transition) return;
   activeThemeTransition = undefined;
   root.classList.remove("theme-transitioning");
+  releaseMiniatureSkies();
+}
+
+/* The reveal's clock and curve live here as constants because two
+   things must agree on them exactly: the clip-circle animation below,
+   and the arrival math that schedules each sun/moon icon's morph to
+   play under it. */
+const REVEAL_MS = 500;
+const REVEAL_EASE = [0.65, 0, 0.35, 1];
+
+/* One coordinate of a cubic bezier running (0,0) → (1,1), given that
+   coordinate's two control values. */
+function bezierAt(a, b, s) {
+  const t = 1 - s;
+  return 3 * t * t * s * a + 3 * t * s * s * b + s * s * s;
+}
+
+/* When does the growing circle reach `fraction` of its final radius?
+   An easing curve only answers the opposite question (progress at a
+   given time), so invert it: bisect the curve's parameter until the
+   progress coordinate hits `fraction`, then read the time coordinate
+   at that spot. Both coordinates are monotonic for this curve, and
+   24 halvings pin the answer far below a millisecond. */
+function revealArrival(fraction) {
+  const [x1, y1, x2, y2] = REVEAL_EASE;
+  let lo = 0;
+  let hi = 1;
+  for (let i = 0; i < 24; i++) {
+    const s = (lo + hi) / 2;
+    if (bezierAt(y1, y2, s) < fraction) lo = s;
+    else hi = s;
+  }
+  return REVEAL_MS * bezierAt(x1, x2, (lo + hi) / 2);
+}
+
+/* How far into its morph an icon should already be when the sweep
+   uncovers it: roughly half its ~230-285ms choreography (the tt-
+   clocks in base.css). The wind-up plays hidden under the old-theme
+   snapshot, so the wipe reveals a transformation at full speed and
+   the icon settles just behind the passing edge — instead of starting
+   its whole journey only after the wipe has moved on without it. */
+const MORPH_LEAD_MS = 120;
+
+/* A sun/moon icon far from the toggle finishes its morph long before
+   the reveal's sweep gets there — hidden under the old-theme snapshot,
+   so the wipe used to uncover an already-finished moon: a teleport,
+   the exact thing this reveal exists to avoid. Give every icon a
+   personal hold (--tt-hold, folded into its transition delays by
+   base.css): the sweep's arrival at its near edge, minus the lead
+   above. Night reaches the card mid-transformation and the icon
+   settles right behind the passing edge — same trick as the exhibit's
+   stars, launched invisible and uncovered mid-flight. */
+function holdMiniatureSkies(x, y, radius) {
+  document.querySelectorAll(".tt-sky").forEach((sky) => {
+    const r = sky.getBoundingClientRect();
+    const d =
+      Math.hypot(r.left + r.width / 2 - x, r.top + r.height / 2 - y) -
+      r.width / 2;
+    const arrival = revealArrival(Math.min(Math.max(d / radius, 0), 1));
+    const hold = Math.max(0, arrival - MORPH_LEAD_MS);
+    sky.style.setProperty("--tt-hold", `${Math.round(hold)}ms`);
+  });
+}
+
+/* Holds are measured for one reveal's geometry and must not outlive
+   it: the next pose change might be a plain resync (bfcache, another
+   tab), where a stale quarter-second pause would read as a hang.
+   Removing the property mid-flight is safe — a transition captures
+   its delay when it starts. */
+function releaseMiniatureSkies() {
+  document.querySelectorAll(".tt-sky").forEach((sky) => {
+    sky.style.removeProperty("--tt-hold");
+  });
 }
 
 /* Animate the captured NEW theme as a circle growing from the sun/moon
@@ -109,8 +182,8 @@ function animateThemeReveal(transition, x, y, radius) {
         ],
       },
       {
-        duration: 500,
-        easing: "cubic-bezier(0.65, 0, 0.35, 1)",
+        duration: REVEAL_MS,
+        easing: `cubic-bezier(${REVEAL_EASE.join(", ")})`,
         pseudoElement: "::view-transition-new(root)",
       }
     );
@@ -129,6 +202,7 @@ toggle.addEventListener("click", () => {
 
   if (!document.startViewTransition || calmMotion.matches) {
     root.classList.remove("theme-transitioning");
+    releaseMiniatureSkies(); /* no sweep to wait for — morph at once */
     applyThemeAndSettle(nextTheme);
     return;
   }
@@ -140,6 +214,10 @@ toggle.addEventListener("click", () => {
     Math.max(x, innerWidth - x),
     Math.max(y, innerHeight - y)
   );
+
+  /* Before the theme flips (which is what starts the transitions):
+     each icon's morph gets scheduled for the sweep's arrival there. */
+  holdMiniatureSkies(x, y, radius);
 
   root.classList.add("theme-transitioning");
   const transition = document.startViewTransition(() => {
@@ -158,6 +236,7 @@ function prepareForSuspension() {
   activeThemeTransition?.skipTransition?.();
   activeThemeTransition = undefined;
   root.classList.remove("theme-transitioning");
+  releaseMiniatureSkies();
   settleAllTransitions();
 }
 
