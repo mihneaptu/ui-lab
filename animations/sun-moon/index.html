@@ -70,16 +70,25 @@
       border-radius: 50%;
       /* md at rest, not sm: at 176px the chip-sized shadow reads as
          "pasted on"; a big object needs a shadow that matches its size
-         to look like it's resting on the paper */
-      box-shadow: var(--shadow-md);
+         to look like it's resting on the paper.
+         The FIXED light alias, deliberately: crossfading a box-shadow
+         between themes re-blurs it on the CPU every frame for the whole
+         500ms flip — the main thing that starved the morph of frames on
+         phones. So the button wears the light shadow permanently (a
+         faint black glow is invisible on the dark paper anyway), and
+         ::after below fades the dark theme's shadow in over it on the
+         GPU-cheap opacity channel instead. */
+      box-shadow: var(--shadow-md-light);
       cursor: pointer;
       /* only the press stays on the fast micro-feedback clock; border,
-         surface, ink, AND shadow all ride the same slow crossfade as
-         the paper. Anything on a faster clock flips to the new theme
-         ahead of the surface and draws attention to itself — the
-         border did exactly that (a bright ring around the still-dark
-         circle), and the shadow bloom on hover reads better slow too:
-         light shifting over an object, not a control lighting up. */
+         surface, and ink all ride the same slow crossfade as the paper.
+         Anything on a faster clock flips to the new theme ahead of the
+         surface and draws attention to itself — the border did exactly
+         that (a bright ring around the still-dark circle).
+         box-shadow stays in the list, but the theme flip no longer
+         touches it — only the desktop hover bloom does, and that reads
+         better slow too: light shifting over an object, not a control
+         lighting up. */
       transition: transform 180ms cubic-bezier(0.2, 0, 0, 1),
                   box-shadow 500ms ease,
                   background-color 500ms ease,
@@ -107,6 +116,33 @@
       pointer-events: none;
     }
 
+    /* The dark theme's shadow, pre-painted on its own layer and simply
+       faded in when night falls. An opacity crossfade runs on the GPU
+       compositor; transitioning the box-shadow itself re-blurs those
+       big soft layers on the CPU during every frame of the 500ms flip —
+       exactly the frames the rays need for their 170ms plunge. On a
+       phone that contest dropped enough frames that the rays seemed to
+       hesitate, then blink out.
+       The layer is transparent, so only its shadow paints: the outer
+       glow lands outside the button's edge, and the inset top rim hugs
+       the rim far above the icon — nothing to cover, no z-index games. */
+    .sky-toggle::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      box-shadow: var(--shadow-md-dark);
+      opacity: 0;
+      /* box-shadow is only here for the desktop hover bloom below —
+         the theme flip rides opacity alone */
+      transition: opacity 500ms ease, box-shadow 500ms ease;
+      pointer-events: none;
+    }
+
+    [data-theme="dark"] .sky-toggle::after {
+      opacity: 1;
+    }
+
     /* position: relative lifts the icon above the dot layer (positioned
        pseudo-elements paint over static children otherwise) */
     .sky-icon {
@@ -116,10 +152,22 @@
     /* Hover: a gentle 2px rise with the shadow deepening one step —
        the object floating up to meet the cursor, not a control
        lighting up. (The rise is on a quick 180ms clock; the shadow
-       blooms slowly behind it.) */
-    .sky-toggle:hover {
-      box-shadow: var(--shadow-lg);
-      transform: translateY(-2px);
+       blooms slowly behind it.)
+       Gated behind (hover: hover): a phone has no cursor, but a tap
+       APPLIES :hover anyway — and then it STICKS after the finger
+       lifts. That piled the rise and the shadow bloom onto the same
+       overloaded first frames of the morph, and left the button
+       floating at -2px afterwards. Mouse devices are unaffected. */
+    @media (hover: hover) {
+      .sky-toggle:hover {
+        box-shadow: var(--shadow-lg-light);
+        transform: translateY(-2px);
+      }
+
+      /* the night sky's copy of the bloom, on its own layer */
+      .sky-toggle:hover::after {
+        box-shadow: var(--shadow-lg-dark);
+      }
     }
 
     /* Pressing the sky: the rise collapses and the button gives

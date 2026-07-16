@@ -73,15 +73,33 @@
      crossfade two shadows smoothly when their lists line up layer for
      layer, inset with inset. Without the placeholder, every theme
      switch would snap the shadows instead of fading them. */
+
+  /* md and lg also exist as FIXED aliases (-light / -dark) that never
+     flip with the theme. They're for elements that pre-paint BOTH
+     themes' shadows at once and crossfade opacity instead of
+     transitioning box-shadow: opacity runs on the GPU compositor,
+     while a box-shadow transition re-blurs these big soft layers on
+     the CPU every frame — cheap on a desktop, visible jank on a phone.
+     (The sun-moon toggle does this; see its ::after.) */
+  --shadow-md-light: inset 0 1px 0 rgba(255, 255, 255, 0),
+                     0 2px 6px rgba(0, 0, 0, 0.07),
+                     0 8px 24px rgba(0, 0, 0, 0.06);
+  --shadow-lg-light: inset 0 1px 0 rgba(255, 255, 255, 0),
+                     0 2px 4px rgba(0, 0, 0, 0.05),
+                     0 12px 24px rgba(0, 0, 0, 0.07),
+                     0 32px 64px rgba(0, 0, 0, 0.08);
+  --shadow-md-dark: inset 0 1px 0 rgba(255, 255, 255, 0.06),
+                    0 2px 6px rgba(0, 0, 0, 0.45),
+                    0 8px 24px rgba(0, 0, 0, 0.35);
+  --shadow-lg-dark: inset 0 1px 0 rgba(255, 255, 255, 0.09),
+                    0 2px 4px rgba(0, 0, 0, 0.5),
+                    0 12px 24px rgba(0, 0, 0, 0.4),
+                    0 32px 64px rgba(0, 0, 0, 0.35);
+
   --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0),
                0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0),
-               0 2px 6px rgba(0, 0, 0, 0.07),
-               0 8px 24px rgba(0, 0, 0, 0.06);
-  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0),
-               0 2px 4px rgba(0, 0, 0, 0.05),
-               0 12px 24px rgba(0, 0, 0, 0.07),
-               0 32px 64px rgba(0, 0, 0, 0.08);
+  --shadow-md: var(--shadow-md-light);
+  --shadow-lg: var(--shadow-lg-light);
 
   /* ------------------------------------------------------------------
      TYPE
@@ -183,11 +201,6 @@
      the dark spread below. The higher the step, the brighter the rim. */
   --shadow-sm: inset 0 1px 0 rgba(255, 255, 255, 0.04),
                0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: inset 0 1px 0 rgba(255, 255, 255, 0.06),
-               0 2px 6px rgba(0, 0, 0, 0.45),
-               0 8px 24px rgba(0, 0, 0, 0.35);
-  --shadow-lg: inset 0 1px 0 rgba(255, 255, 255, 0.09),
-               0 2px 4px rgba(0, 0, 0, 0.5),
-               0 12px 24px rgba(0, 0, 0, 0.4),
-               0 32px 64px rgba(0, 0, 0, 0.35);
+  --shadow-md: var(--shadow-md-dark);
+  --shadow-lg: var(--shadow-lg-dark);
 }
