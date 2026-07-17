@@ -8,16 +8,27 @@
    If the library fails to load (offline, CDN down), the plain
    navigator.vibrate fallback below keeps Android working like before.
 
-   Only the exhibits buzz, and only at the moment the hand causes
-   something physical on screen — the theme morph committing, a melt
-   starting. Plain navigation stays quiet.
+   Only the exhibits speak. Ordinary navigation — cards, links, the
+   effort labels — stays silent, the same rule the visuals follow:
+   choreography belongs to the exhibits, everything else keeps quiet.
+   A buzz plays only when the hand causes something physical on
+   screen: the theme morph committing, a melt starting. (A uniform
+   whisper on every tap target was tried and rolled back — it made
+   this the one website that buzzes on every link, without exhibiting
+   any craft in return.)
 
-   A pattern is [buzz, pause, buzz, pause, …] in ms. Strength can't be
-   controlled, only duration — so "light" is short (6–10ms) and "firm"
-   is slightly longer (12–16ms). Anything past ~20ms stops feeling
-   like a tick and starts feeling like a phone call. (On iOS the
-   durations collapse into single system ticks; the rhythm survives
-   even though the weights don't.)
+   A pattern is [buzz, pause, buzz, pause, …] in ms. Strength can't
+   be set at all — vibrate() is an on/off switch with a timer, always
+   at full drive; the amplitude control native apps use never made it
+   to the web. And the motor needs ~10–20ms just to spin up, so
+   durations a few ms apart (6 vs 12) collapse into the same faint
+   tick in the hand. Perceived weight comes from BIG duration steps
+   between tiers — but the ceiling is low: Android's own haptics
+   guidance keeps crisp impulses at ~20ms, and past ~25ms a hit
+   smears into a buzz (a 40ms beat field-tested as "too heavy").
+   The usable range is narrow, so the tiers have to spend it well.
+   (On iOS every buzz collapses into the one system tick; the rhythm
+   survives even though the weights don't.)
 
    Everything is delegated from document, so one script serves every
    page: it only acts on elements that exist. */
@@ -62,21 +73,39 @@
     return event.pointerType === "touch";
   }
 
-  /* --- The patterns, one per exhibit ----------------------------------
+  /* --- The patterns ----------------------------------------------------
+
+     Three weights, doubling (6 / 12 / 25), the whole ladder low in
+     the crisp zone: a 10/20/40 ladder field-tested as too heavy,
+     its top beat smeared past "hit" into "buzz".
 
      theme morph (header chip / sun-moon exhibit):
-       a tick as the rays sink on press, then a firmer pulse ~130ms in,
-       right as the mask's bite carves the crescent — the moment the
-       morph "commits". Same shape both directions; at this scale the
-       carve and the heal weigh the same in the hand.
+       a faint press tick, then the site's one heavy hit lands
+       ~125ms in, right as the mask's bite carves the crescent: the
+       moment the morph "commits". Same shape both directions; at
+       this scale the carve and the heal weigh the same in the hand.
 
-     melting buttons: one tick on the press that starts the melt, then
-       the hand goes quiet and the eye takes over — the drips are the
-       screen's drama, not the phone's. */
+     melting buttons: the whole melt rides one pattern, scheduled at
+       the press (vibrate() takes the full timeline up front, so no
+       timers run during the animation): a firm press tick, quiet
+       while the shell only sags, a faint beat as each drop lets go,
+       then a soft flutter that thins out as the body dissolves —
+       the sensation shrinks with the mass still on screen and dies
+       just before the visual does. Smoothness is faked with rhythm,
+       since the motor has no volume knob. Timed against the
+       keyframes in animations/melting-button/index.html — retime
+       those, retime these. Fable and Sol melt on different clocks,
+       so each gets its own timeline, keyed by the button's
+       data-melt. */
 
   const patterns = {
-    theme: [6, 120, 12], /* press … carve */
-    melt:  10,           /* press, then watch */
+    theme: [6, 119, 25], /* press … carve */
+    melt: {
+      /* press ………… drip1 (1.7s) … drip2 (2.0s) ………… body fades (2.6–3.4s) */
+      fable: [12, 1688, 5, 295, 5, 645, 6, 90, 5, 120, 4, 150, 3],
+      /* press … drop1 (~0.75s) … drop2 (~0.9s) … collapse flutter (1.3–1.9s) */
+      sol:   [12, 738, 5, 138, 5, 420, 6, 60, 7, 50, 8, 60, 6, 90, 4, 120, 3],
+    },
   };
 
   document.addEventListener("click", (event) => {
@@ -93,7 +122,9 @@
       if (melt.classList.contains("is-melting") &&
           !melt.dataset.hapticsPlayed) {
         melt.dataset.hapticsPlayed = "true";
-        buzz(patterns.melt);
+        /* Unknown variants degrade to a bare press tick rather than
+           silence, so a future button is never mute by accident. */
+        buzz(patterns.melt[melt.dataset.melt] || 12);
       }
       return;
     }
