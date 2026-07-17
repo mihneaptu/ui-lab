@@ -94,8 +94,10 @@
   const RING_DAMPING = 5; // loose springs while shaken (vs DAMPING at rest)
   const RING = 1200;      // ms the looseness outlives the last jolt
 
-  let rect = null;  // the word's box, cached per hover (it never moves mid-hover)
+  let rect = null;  // the word's box, cached per hover — zoom and scroll
+                    // drop the cache mid-hover (see the guards below)
   let lastX = null; // last cursor x inside the word, for the comb's deltas
+  let lastZoom = devicePixelRatio; // zoom detector, see the comb's guard
 
   function measure() {
     rect = word.getBoundingClientRect();
@@ -149,7 +151,9 @@
   word.addEventListener("pointerleave", (e) => {
     if (e.pointerType === "touch") return; // touch leaves via lift, below
     lastX = null; // forget the trail so re-entry isn't one giant delta
-    if (rect === null) return;
+    /* when a scroll dropped the cache an instant before the cursor
+       left, remeasure — bailing here would strand the word in italic */
+    if (rect === null) measure();
     ripple(e.clientX - rect.left, 0);
   });
 
@@ -188,7 +192,24 @@
     /* touch combs only while the followed finger is down; hovers comb
        freely — either way it's the same physics below */
     if (e.pointerType === "touch" && e.pointerId !== touchId) return;
-    if (rect === null) return;
+    /* Ctrl+scroll zoom rescales the page under a stationary cursor,
+       and the browser then fires one synthetic move so hover state
+       catches up. Against the cached box that reads as the hand
+       teleporting — one giant delta per wheel notch, combing the
+       letters flat. Zoom is the only thing that changes
+       devicePixelRatio, so when it moves, drop the cache and the
+       trail — the same cure as a scroll (below): the remeasure on
+       the next line rebuilds the box, the null trail skips the comb,
+       and the last line reseeds from the new coordinates. */
+    if (devicePixelRatio !== lastZoom) {
+      lastZoom = devicePixelRatio;
+      rect = null;
+      lastX = null;
+    }
+    /* the cache is gone (a scroll or the zoom above dropped it): the
+       word moved under the cursor, so remeasure before trusting any
+       coordinate */
+    if (rect === null) measure();
     const x = e.clientX - rect.left;
     if (lastX !== null) {
       const dx = x - lastX;
@@ -209,6 +230,19 @@
     }
     lastX = x;
   });
+
+  /* Scrolling slides the word under a stationary cursor and the
+     browser's catch-up move would comb it as one giant flick — the
+     same teleport as zoom, so the same cure: drop the trail AND the
+     cached box (the word's viewport position just changed; the next
+     move remeasures, above). Not while a finger drives the comb —
+     its scroll already ends through pointercancel, and lift still
+     needs lastX to stand the word up from where the finger was. */
+  window.addEventListener("scroll", () => {
+    if (touchId !== null) return;
+    lastX = null;
+    rect = null;
+  }, { passive: true });
 
   /* --- Shaking the phone ------------------------------------------------
      The letters pivot at their feet, so a sideways jolt tips them like

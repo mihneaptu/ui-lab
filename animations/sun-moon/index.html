@@ -662,6 +662,7 @@
     /* Listening on the whole button, not just the 72px icon: REACH
        extends past the icon's edge, so a ray should already stir as
        the cursor closes in on it from the surrounding paper. */
+    let lastZoom = devicePixelRatio;
     toggle.addEventListener("pointermove", (e) => {
       /* touch brushes only while the followed finger is down; the
          cursor brushes freely — the physics below is shared */
@@ -671,6 +672,20 @@
       const r = icon.getBoundingClientRect();
       const unit = r.width / 24;
       const p = { x: (e.clientX - r.left) / unit, y: (e.clientY - r.top) / unit };
+
+      /* Ctrl+scroll zoom rescales the page under a stationary cursor,
+         and the browser then fires one synthetic move so hover state
+         catches up. Relative to the icon that reads as the hand
+         teleporting — one giant delta per wheel notch — and the kick
+         slammed whatever the cursor landed next to (by night the
+         stars, rattled out of their sky on every notch). Zoom is the
+         only thing that changes devicePixelRatio, so when it moves,
+         drop the trail — the same cure as leaving: the kick below
+         skips, and the last line reseeds from the new coordinates. */
+      if (devicePixelRatio !== lastZoom) {
+        lastZoom = devicePixelRatio;
+        pointer = null;
+      }
 
       if (pointer) {
         const dx = p.x - pointer.x;
@@ -703,6 +718,17 @@
          parts already in motion just spring home on their own */
       pointer = null;
     });
+
+    /* Scrolling has the same teleport problem as zoom: each wheel
+       notch slides the icon ~100px under a stationary cursor and the
+       browser's catch-up move would land as one giant kick. The page
+       only scrolls when zoomed in, which is exactly when it happens
+       right next to the icon. Same cure as leaving: drop the trail.
+       (Touch is unaffected — a scrolling finger already exits through
+       pointercancel, which clears the trail on its own.) */
+    window.addEventListener("scroll", () => {
+      pointer = null;
+    }, { passive: true });
 
     /* --- Shaking the phone ------------------------------------------------
        The same springs answer the accelerometer: jolt the phone and the
