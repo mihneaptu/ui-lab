@@ -85,6 +85,14 @@
                           // little overshoot) before being stood back up
   const SHAKE = 250;      // deg/s of lean per m/s² of sideways phone jolt
   const SHAKE_MIN = 2;    // m/s² — below this the phone is just being held
+  /* You can't watch letters tremble while your own hand is shaking the
+     screen — eyes and phone move together, and the rattle only shows up
+     in recordings. So the show is the RING-DOWN: while jolts arrive
+     (and for a beat after) the springs run much looser, letting the
+     letters swing big and keep visibly trembling for a second after the
+     hand stops, before the normal damping takes over and calms them. */
+  const RING_DAMPING = 5; // loose springs while shaken (vs DAMPING at rest)
+  const RING = 1200;      // ms the looseness outlives the last jolt
 
   let rect = null;  // the word's box, cached per hover (it never moves mid-hover)
   let lastX = null; // last cursor x inside the word, for the comb's deltas
@@ -214,11 +222,14 @@
      wants a permission prompt we won't show for an easter egg — in
      practice this is Android over HTTPS, and anywhere else the
      listener never hears a thing. */
+  let ringUntil = 0; // while now < this, tick runs the loose springs
+
   if (isSecureContext) {
     window.addEventListener("devicemotion", (e) => {
       const a = e.acceleration; // gravity already subtracted
       if (!a || a.x === null) return;
       if (Math.abs(a.x) < SHAKE_MIN) return; // held, not shaken
+      ringUntil = performance.now() + RING;
       /* interval is the sensor's sampling period, in MILLISECONDS */
       const dt = e.interval > 0 && e.interval < 100 ? e.interval / 1000 : 0.016;
       for (const l of letters) {
@@ -246,6 +257,9 @@
     const dt = Math.min((t - lastT) / 1000, 0.032);
     lastT = t;
 
+    /* shaken springs ring loose; everything else gets the tight ones */
+    const damping = t < ringUntil ? RING_DAMPING : DAMPING;
+
     let alive = false;
     for (const l of letters) {
       /* deliver every wave that has arrived, in order — a tap parks two
@@ -260,7 +274,7 @@
       /* semi-implicit Euler: update velocity from the spring force and
          friction FIRST, then move — stabler than the naive order */
       const x = l.lean - l.target;
-      l.v += (-STIFFNESS * x - DAMPING * l.v) * dt;
+      l.v += (-STIFFNESS * x - damping * l.v) * dt;
       l.lean += l.v * dt;
 
       if (Math.abs(l.lean - l.target) > 0.02 || Math.abs(l.v) > 0.4) {
