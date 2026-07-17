@@ -80,6 +80,11 @@
          GPU-cheap opacity channel instead. */
       box-shadow: var(--shadow-md-light);
       cursor: pointer;
+      /* the finger drives the cursor jiggle (see the script), so
+         horizontal drags across the button must reach it as pointer
+         moves instead of being eaten as a failed scroll — pan-y keeps
+         vertical swipes scrolling the page like anywhere else */
+      touch-action: pan-y;
       /* only the press stays on the fast micro-feedback clock; border,
          surface, and ink all ride the same slow crossfade as the paper.
          Anything on a faster clock flips to the new theme ahead of the
@@ -601,18 +606,55 @@
       });
     }
 
+    /* A shake is a uniform force field — identical kicks would march
+       every part in lockstep, which reads as the icon sliding around,
+       not parts rattling in place. A fixed per-part "mass" desyncs
+       them: lighter parts fly a little further on the same jolt. */
+    for (const part of parts) part.gain = 0.75 + Math.random() * 0.5;
+
     const REACH = 4;       // influence radius around a part, in units
     const FLICK = 6;       // how much of the cursor's motion transfers
     const STIFFNESS = 520; // spring pull toward home (1/s²)
     const DAMPING = 11;    // low enough that the return overshoots (1/s)
     const V_MAX = 32;      // units/s — a wild swipe can't launch a part
+    const SHAKE = 12;      // units/s of part speed per m/s² of phone jolt
+    const SHAKE_MIN = 2;   // m/s² — below this the phone is just being held
 
     let pointer = null; // last cursor spot, in viewBox units
+    let touchId = null; // the one finger standing in for the cursor
+
+    /* On a phone the finger IS the cursor — the same contract as the
+       homepage title: pressing the button starts the trail under the
+       fingertip, dragging brushes the parts exactly like cursor motion,
+       lifting lets the springs settle home. A plain tap still flips the
+       sky: the browser only fires click when the finger didn't really
+       travel, so the two gestures never collide. Touch pointers are
+       implicitly captured on pointerdown, so a drag that wanders off
+       the button keeps brushing until it lifts (or the scroll takes it
+       via pointercancel — pan-y above hands it only vertical swipes). */
+    toggle.addEventListener("pointerdown", (e) => {
+      if (e.pointerType !== "touch" || touchId !== null) return;
+      touchId = e.pointerId;
+      const r = icon.getBoundingClientRect();
+      const unit = r.width / 24;
+      pointer = { x: (e.clientX - r.left) / unit, y: (e.clientY - r.top) / unit };
+    });
+
+    function lift(e) {
+      if (e.pointerId !== touchId) return;
+      touchId = null;
+      pointer = null; // parts already in motion just spring home
+    }
+    toggle.addEventListener("pointerup", lift);
+    toggle.addEventListener("pointercancel", lift);
 
     /* Listening on the whole button, not just the 72px icon: REACH
        extends past the icon's edge, so a ray should already stir as
        the cursor closes in on it from the surrounding paper. */
     toggle.addEventListener("pointermove", (e) => {
+      /* touch brushes only while the followed finger is down; the
+         cursor brushes freely — the physics below is shared */
+      if (e.pointerType === "touch" && e.pointerId !== touchId) return;
       /* remeasure every move — the button itself drifts 2px upward on
          hover, so a cached rect would smear every coordinate */
       const r = icon.getBoundingClientRect();
@@ -650,6 +692,40 @@
          parts already in motion just spring home on their own */
       pointer = null;
     });
+
+    /* --- Shaking the phone ------------------------------------------------
+       The same springs answer the accelerometer: jolt the phone and the
+       mounted parts lag behind it, then get pulled home — the pseudo-
+       force of the phone's own acceleration, fed in as velocity kicks.
+       Day picks the rays, night the stars, same rule as the cursor.
+       Mapped for portrait (device x runs along screen x; device y
+       points UP the screen, so it flips): this is a phone flourish,
+       and phones hold the lab upright. Motion sensors only exist on
+       secure origins, and iOS additionally wants a permission prompt
+       we won't show for an easter egg — in practice this is Android
+       over HTTPS, and anywhere else the listener never hears a thing. */
+    if (isSecureContext) {
+      window.addEventListener("devicemotion", (e) => {
+        const a = e.acceleration; // gravity already subtracted
+        if (!a || a.x === null) return;
+        if (Math.hypot(a.x, a.y) < SHAKE_MIN) return; // held, not shaken
+        /* interval is the sensor's sampling period, in MILLISECONDS */
+        const dt = e.interval > 0 && e.interval < 100 ? e.interval / 1000 : 0.016;
+        const isMoon = toggle.classList.contains("is-moon");
+        for (const part of parts) {
+          if (part.moon !== isMoon) continue;
+          /* the phone jerks one way, the parts lag the other */
+          part.vx += -a.x * SHAKE * part.gain * dt;
+          part.vy += a.y * SHAKE * part.gain * dt;
+          const v = Math.hypot(part.vx, part.vy);
+          if (v > V_MAX) {
+            part.vx *= V_MAX / v;
+            part.vy *= V_MAX / v;
+          }
+        }
+        wake();
+      });
+    }
 
     let rafId = null;
     let lastT = 0;
