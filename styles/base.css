@@ -567,6 +567,35 @@ a:focus-visible {
   text-wrap: balance; /* a two-line title splits evenly, never 90/10 */
 }
 
+/* The headline's hover italic (scripts/title-lean.js): the script splits
+   the title into these spans and skews each on its own spring — Bricolage
+   ships no italic and font-synthesis is off, so the slant is a transform.
+   Pivoting from the bottom edge keeps the feet planted while the tops
+   swing over, which is how type actually leans; inline-block because
+   inline elements can't be transformed. No transition here on purpose —
+   the motion is integrated per-frame by the script, and a CSS transition
+   underneath it would fight every step. */
+
+/* On touch the finger drives the same physics, so the word must keep the
+   gesture: pan-y hands vertical swipes to the scroll but lets horizontal
+   drags comb the letters instead of being eaten as a failed scroll. The
+   split title was never really selectable text anyway (a drag across it
+   would grab letters one span at a time), so selection and the tap
+   flash are turned off rather than left to misfire. These live on
+   .lean-word, which only exists once the script is running — a title
+   the script left alone stays ordinary selectable text. */
+.page-title .lean-word {
+  touch-action: pan-y;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.page-title .lean-letter {
+  display: inline-block;
+  transform-origin: 50% 100%;
+}
+
 .section-title {
   font-family: var(--font-display);
   font-size: var(--text-lg);
