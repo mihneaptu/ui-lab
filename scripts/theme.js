@@ -173,12 +173,27 @@ function releaseMiniatureSkies() {
    quiet opening on the icon's own morph, sweeps the page through the
    middle, and settles into the corner instead of stalling there. */
 function animateThemeReveal(transition, x, y, radius) {
+  /* The pseudo this animates does NOT live in the page's coordinate
+     space: it fills the "snapshot containing block", which on phones
+     is taller than the viewport (it includes the browser's own bars)
+     and in some mobile browsers isn't even at the viewport's scale.
+     Pixel coordinates measured with getBoundingClientRect land wherever
+     THAT box says — on a phone the circle bloomed far from the toggle.
+     Fractions of the box survive any offset or scaling, so the center
+     goes in as percentages, and the radius as its share of the box's
+     own diagonal reference (a clip-circle % resolves against
+     diagonal ÷ √2 — hence the √2 putting the pixel radius back on
+     that scale). On desktop the box IS the viewport and these resolve
+     to the exact same circle as the old pixel values. */
+    const xp = (x / innerWidth) * 100;
+    const yp = (y / innerHeight) * 100;
+    const rp = (radius * Math.SQRT2 * 100) / Math.hypot(innerWidth, innerHeight);
   transition.ready.then(() => {
     root.animate(
       {
         clipPath: [
-          `circle(0px at ${x}px ${y}px)`,
-          `circle(${radius}px at ${x}px ${y}px)`,
+          `circle(0% at ${xp}% ${yp}%)`,
+          `circle(${rp}% at ${xp}% ${yp}%)`,
         ],
       },
       {
