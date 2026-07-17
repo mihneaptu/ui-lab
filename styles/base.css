@@ -717,8 +717,20 @@ a:focus-visible {
   animation: tag-rainbow-drift 2.5s linear infinite;
 }
 
-.card-tag:hover .card-tag-rainbow {
-  /* 55% ink stays on top — the rainbow reads as a tint, not a paint job */
+/* Hover is the desktop way in, and it's gated to devices that really
+   have one: touch browsers replay :hover on tap, and that sticky
+   state would pin the tint on long after the show should end. */
+@media (hover: hover) {
+  .card-tag:hover .card-tag-rainbow {
+    /* 55% ink stays on top — the rainbow reads as a tint, not a paint job */
+    -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted) 55%, transparent);
+  }
+}
+
+/* The touch way in: rainbow-tag.js lights this on tap (instead of
+   letting the card navigate) and holds it for one full drift loop,
+   then the ink returns on the same 400ms fade hover uses. */
+.card-tag.is-lit .card-tag-rainbow {
   -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted) 55%, transparent);
 }
 
