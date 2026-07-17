@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- The tube is drawn upright (straight walls, horizontal wave) and the
+       whole group is tilted afterwards — editing vertical geometry is far
+       easier than editing pre-tilted coordinates. The translate recenters
+       the tilted shape in the square. -->
+  <style>
+    .ink  { fill: #1a1a1a; }
+    .wall { fill: none; stroke: #1a1a1a; }
+    /* Favicons can't see the page's data-theme toggle; the OS/browser
+       color scheme is the only signal available here. */
+    @media (prefers-color-scheme: dark) {
+      .ink  { fill: #f2f2f2; }
+      .wall { stroke: #f2f2f2; }
+    }
+  </style>
+  <g transform="translate(0 4) rotate(34 50 50)">
+    <!-- cap: a stadium bar overhanging the tube on both sides -->
+    <rect class="ink" x="34.25" y="11" width="31.5" height="7.5" rx="3.75"/>
+    <!-- tube: two walls joined by a rounded bottom; the open top ends
+         under the cap so the joint never shows -->
+    <path class="wall" stroke-width="5" d="M42 16 V82 A8 8 0 0 0 58 82 V16"/>
+    <!-- liquid: wavy meniscus, low on the left wall and cresting into the
+         right one, closed around the same bottom arc as the tube -->
+    <path class="ink" d="M42 59.5 C43 61.5 44 62.3 45.5 62.5 C48.5 62.8 48.5 51.5 53.5 49.9 C55.5 49.3 57.3 49.6 58 50.8 V82 A8 8 0 0 1 42 82 Z"/>
+  </g>
+</svg>
