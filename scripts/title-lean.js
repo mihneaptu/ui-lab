@@ -68,6 +68,7 @@
       target: 0,              // the pose the spring is pulling toward
       waves: [],              // poses in flight: [{ at, target }], sorted by at
       waveAt: 0,              // when the newest wave reaches (or reached) this letter
+      gain: 0.75 + Math.random() * 0.5, // per-letter "mass" — see the shake below
     });
   }
 
@@ -82,6 +83,8 @@
                           // this much per letter: about the spring's travel
                           // time, so each letter reaches full italic (plus its
                           // little overshoot) before being stood back up
+  const SHAKE = 250;      // deg/s of lean per m/s² of sideways phone jolt
+  const SHAKE_MIN = 2;    // m/s² — below this the phone is just being held
 
   let rect = null;  // the word's box, cached per hover (it never moves mid-hover)
   let lastX = null; // last cursor x inside the word, for the comb's deltas
@@ -198,6 +201,35 @@
     }
     lastX = x;
   });
+
+  /* --- Shaking the phone ------------------------------------------------
+     The letters pivot at their feet, so a sideways jolt tips them like
+     tombstones on hinges: the phone lurches, the tops lag behind, the
+     springs stand them back up. Only the horizontal axis can torque a
+     hinged letter — vertical shakes pass straight through the hinge and
+     do nothing, which is how it should feel. Each letter carries its
+     own "mass" (gain, set at build): a uniform kick would rock the row
+     in lockstep and read as the page sliding, not the word rattling.
+     Motion sensors only exist on secure origins, and iOS additionally
+     wants a permission prompt we won't show for an easter egg — in
+     practice this is Android over HTTPS, and anywhere else the
+     listener never hears a thing. */
+  if (isSecureContext) {
+    window.addEventListener("devicemotion", (e) => {
+      const a = e.acceleration; // gravity already subtracted
+      if (!a || a.x === null) return;
+      if (Math.abs(a.x) < SHAKE_MIN) return; // held, not shaken
+      /* interval is the sensor's sampling period, in MILLISECONDS */
+      const dt = e.interval > 0 && e.interval < 100 ? e.interval / 1000 : 0.016;
+      for (const l of letters) {
+        /* the phone jerks right, the tops lag left — and vice versa */
+        l.v += -a.x * SHAKE * l.gain * dt;
+        if (l.v > V_MAX) l.v = V_MAX;
+        else if (l.v < -V_MAX) l.v = -V_MAX;
+      }
+      wake();
+    });
+  }
 
   let rafId = null;
   let lastT = 0;
