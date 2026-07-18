@@ -42,6 +42,383 @@
     .sky-name-night { display: none; }
     [data-theme="dark"] .sky-name-day { display: none; }
     [data-theme="dark"] .sky-name-night { display: inline; }
+
+    /* Hovering (or keyboard-focusing) the card plays the very morph its
+       name promises, as a preview: on a light page the little sun gives
+       way to the moon; leave, and the return morph brings the current
+       sky back. Poses and clocks are the chip's own nightfall numbers
+       from base.css — same destination, same tempo — only with the
+       delays 0-based: --tt-hold schedules a morph under the theme
+       reveal's sweep, and a pointer is its own cue. */
+    .component-card:hover .card-sky .tt-rays,
+    .component-card:focus-visible .card-sky .tt-rays {
+      rotate: 45deg;
+      scale: 0.25;
+      transition-duration: 100ms;
+      transition-delay: 0ms;
+    }
+
+    .component-card:hover .card-sky .tt-disc,
+    .component-card:focus-visible .card-sky .tt-disc {
+      transform: scale(1.75);
+      transition-duration: 215ms;
+      transition-delay: 15ms;
+    }
+
+    .component-card:hover .card-sky .tt-bite,
+    .component-card:focus-visible .card-sky .tt-bite {
+      transform: translate(-15.7px, 0);
+      transition-duration: 145ms;
+      transition-delay: 50ms;
+    }
+
+    /* At night the promise runs the other way — "Moon to sun" — so the
+       hover pose is the sun: crescent heals first, rays climb out last,
+       on the sunrise clocks (overshoot ease and all). These outweigh
+       the moon-pose hover rules above via the [data-theme] hook, the
+       same way base.css's dark pose outweighs its light one. The full
+       shorthand is restated because the dark pose overrides duration
+       and delay, and sunrise needs its own back. */
+    [data-theme="dark"] .component-card:hover .card-sky .tt-rays,
+    [data-theme="dark"] .component-card:focus-visible .card-sky .tt-rays {
+      rotate: 0deg;
+      scale: 1;
+      transition: scale 200ms cubic-bezier(0.34, 1.3, 0.64, 1) 85ms,
+                  rotate 100ms cubic-bezier(0.65, 0, 0.35, 1) 85ms;
+    }
+
+    [data-theme="dark"] .component-card:hover .card-sky .tt-disc,
+    [data-theme="dark"] .component-card:focus-visible .card-sky .tt-disc {
+      transform: none;
+      transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 25ms;
+    }
+
+    [data-theme="dark"] .component-card:hover .card-sky .tt-bite,
+    [data-theme="dark"] .component-card:focus-visible .card-sky .tt-bite {
+      transform: none;
+      transition: transform 240ms cubic-bezier(0.65, 0, 0.35, 1) 0ms;
+    }
+
+    /* The stage flips with its sky — but not as a crossfade: fading
+       (dark box, light ink) into (light box, dark ink) drags both
+       through the same middle grays, so the icon spent the fade's whole
+       midsection invisible against its own background and popped back
+       in near the end — read as a teleport. Instead the other sky
+       arrives the way the exhibit's does: as a circle blooming out of
+       the sun/moon itself (a ::after layer carrying the opposite
+       theme's surface AND dot grid, clip-path doing the travel), and
+       shrinking back into it on the way out. The ink flips only while
+       the edge is crossing the icon, so it never fights a gray: at
+       once going in (the bloom starts here), held to the end coming
+       back (the edge returns here last, ~210ms into the retreat). */
+    .sky-card .card-preview {
+      transition: border-color 240ms cubic-bezier(0.65, 0, 0.35, 1),
+                  color var(--speed-color) ease 140ms;
+    }
+
+    .sky-card .card-preview::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      /* The opposite sky, dots and all. Unlike the ::before dot layer
+         this one is allowed to be a plain gradient pattern (which
+         can't fade): nothing here ever changes color, it only travels. */
+      background-color: var(--surface-dark);
+      background-image: radial-gradient(var(--line-dark) 1px, transparent 1px);
+      background-size: 14px 14px;
+      /* 40px 50% = the icon's center (24px stage padding + half of the
+         32px icon); a 150% radius clears the far corner at any width */
+      clip-path: circle(0% at 40px 50%);
+      transition: clip-path 240ms cubic-bezier(0.65, 0, 0.35, 1);
+    }
+
+    /* base.css already lifts the stage's children above the ::before
+       dots; one more step keeps them above the traveling sky too. */
+    .sky-card .card-preview > * {
+      z-index: 1;
+    }
+
+    .sky-card:hover .card-preview,
+    .sky-card:focus-visible .card-preview {
+      border-color: var(--line-dark);
+      color: var(--ink-dark);
+      /* in-clocks: the bloom starts at the icon — flip the ink at once */
+      transition: border-color 240ms cubic-bezier(0.65, 0, 0.35, 1),
+                  color var(--speed-color) ease;
+    }
+
+    .sky-card:hover .card-preview::after,
+    .sky-card:focus-visible .card-preview::after {
+      clip-path: circle(150% at 40px 50%);
+    }
+
+    [data-theme="dark"] .sky-card .card-preview::after {
+      background-color: var(--surface-light);
+      background-image: radial-gradient(var(--line-light) 1px, transparent 1px);
+    }
+
+    [data-theme="dark"] .sky-card:hover .card-preview,
+    [data-theme="dark"] .sky-card:focus-visible .card-preview {
+      border-color: var(--line-light);
+      color: var(--ink-light);
+    }
+
+    /* The corner tag rides above the flip as page chrome, but a solid
+       dark chip parked on the lit stage read as a hole — so it dresses
+       for the stage: light-mode clothes on the light box. The chip's
+       box flips fast (80ms), waiting 120ms for the bloom to reach the
+       corner going in and snapping back early coming out (a shrinking
+       circle uncovers the corner first): any slower a crossfade and
+       the box meets the arriving sky in the same middle gray. */
+    .sky-card .card-tag {
+      transition: background-color 80ms ease, border-color 80ms ease;
+    }
+
+    .sky-card:hover .card-tag,
+    .sky-card:focus-visible .card-tag {
+      background: var(--surface-dark);
+      border-color: var(--line-dark);
+      transition-delay: 120ms;
+    }
+
+    [data-theme="dark"] .sky-card:hover .card-tag,
+    [data-theme="dark"] .sky-card:focus-visible .card-tag {
+      background: var(--surface-light);
+      border-color: var(--line-light);
+    }
+
+    /* The rainbow span's ink is NOT re-clocked: it keeps riding
+       base.css's 400ms -webkit-text-fill-color fade — the hover tint's
+       fade-in and fade-out live on that clock. These rules only hand
+       the fade different destinations: the opposite sky's muted ink
+       while the card is hovered, and its 55% tint under the pointer.
+       The ink doesn't need the chip's fast flip: the chip's background
+       races through the dangerous middle grays in 80ms, so the slowly
+       recoloring ink never meets it there. */
+    .sky-card:hover .card-tag-rainbow,
+    .sky-card:focus-visible .card-tag-rainbow {
+      -webkit-text-fill-color: var(--ink-muted-dark);
+    }
+
+    [data-theme="dark"] .sky-card:hover .card-tag-rainbow,
+    [data-theme="dark"] .sky-card:focus-visible .card-tag-rainbow {
+      -webkit-text-fill-color: var(--ink-muted-light);
+    }
+
+    /* The tint, restated per stage-side: base.css's own hover/tap
+       rules tie with the hue rules above and lose by order, so these
+       take over at higher specificity with the flipped hue mixed in. */
+    @media (hover: hover) {
+      .sky-card:hover .card-tag:hover .card-tag-rainbow {
+        -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted-dark) 55%, transparent);
+      }
+
+      [data-theme="dark"] .sky-card:hover .card-tag:hover .card-tag-rainbow {
+        -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted-light) 55%, transparent);
+      }
+    }
+
+    /* Touch's tap-to-light: a tap also sticks :hover to the card (the
+       tag's preventDefault keeps us on the page), so the stuck-flipped
+       stage needs the tint in the flipped hue too. */
+    .sky-card:hover .card-tag.is-lit .card-tag-rainbow {
+      -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted-dark) 55%, transparent);
+    }
+
+    [data-theme="dark"] .sky-card:hover .card-tag.is-lit .card-tag-rainbow {
+      -webkit-text-fill-color: color-mix(in srgb, var(--ink-muted-light) 55%, transparent);
+    }
+
+    /* The segmented-control card's miniature: a live echo of the
+       exhibit's resting pose (thumb parked on snappy, the middle
+       preset), not a still. Hovering or keyboard-focusing the card
+       slides the thumb to the last segment on the exhibit's overshoot
+       ease — a small promise of the spring waiting inside — and the
+       labels retint mid-flight, on the same trailing clock the exhibit
+       uses for its own ink swap. */
+    .seg-mini {
+      --pad: 4px;
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      width: 200px;
+      padding: var(--pad);
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: var(--radius-md);
+      font-family: var(--font-body); /* the exhibit's own face */
+      font-size: var(--text-xs);
+      line-height: 1;
+    }
+
+    .seg-mini-thumb {
+      position: absolute;
+      top: var(--pad);
+      bottom: var(--pad);
+      left: var(--pad);
+      width: calc((100% - 2 * var(--pad)) / 3);
+      background: var(--accent);
+      border-radius: var(--radius-sm);
+      transform: translateX(100%);
+      transition: transform 520ms cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+
+    .component-card:hover .seg-mini-thumb,
+    .component-card:focus-visible .seg-mini-thumb {
+      transform: translateX(200%);
+    }
+
+    .seg-mini-option {
+      position: relative;
+      z-index: 1;
+      display: grid;
+      place-items: center;
+      height: 28px;
+      color: var(--ink-muted);
+      transition: color 160ms ease 120ms;
+    }
+
+    .seg-mini .is-on {
+      color: var(--accent-contrast);
+    }
+
+    .component-card:hover .seg-mini .is-on,
+    .component-card:focus-visible .seg-mini .is-on {
+      color: var(--ink-muted);
+    }
+
+    .component-card:hover .seg-mini-option:last-child,
+    .component-card:focus-visible .seg-mini-option:last-child {
+      color: var(--accent-contrast);
+    }
+
+    /* The rail card's miniature: the strip itself at 1:5 or so — real
+       panels from the exhibit standing on the same traveling hairline,
+       stems and all, with the selected one lifted. Hovering or
+       keyboard-focusing the card slides the strip one preview over on
+       the seg-mini's overshoot ease (the closest a transition gets to
+       the spring inside), and the lift hands to the next panel the way
+       the exhibit's selection does. */
+    .rail-mini {
+      position: relative;
+      width: 200px;
+      height: 58px; /* 2px of lift headroom + 50px panel + 5px stem + line */
+      overflow: hidden;
+    }
+
+    .rail-mini-track {
+      position: absolute;
+      top: 2px;
+      left: 0;
+      display: flex;
+      gap: 10px;
+      width: max-content;
+      transform: translateX(-20px); /* centers panel 3 in the 200px window */
+      transition: transform 520ms cubic-bezier(0.34, 1.3, 0.64, 1);
+    }
+
+    .component-card:hover .rail-mini-track,
+    .component-card:focus-visible .rail-mini-track {
+      transform: translateX(-70px); /* one panel-plus-gap to the left */
+    }
+
+    /* The hairline rides the track, like the exhibit's: the strip is
+       finite furniture, and both of its ends stay off this little
+       stage in both poses. */
+    .rail-mini-track::before {
+      content: "";
+      position: absolute;
+      left: -8px;
+      right: -8px;
+      bottom: -5px;
+      height: 1px;
+      background: var(--line-strong);
+    }
+
+    .rail-mini-item {
+      position: relative; /* anchors the stem */
+      flex: 0 0 auto;
+      width: 40px;
+      aspect-ratio: 4 / 5; /* the exhibit's panel, at token scale */
+      padding: 5px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+      border-radius: 3px; /* radius-lg at this panel's scale */
+      transition: transform 240ms ease,
+                  border-color 240ms ease;
+    }
+
+    /* The stem pinning each panel to the hairline; the lifted panel's
+       stretches the same 2px so the tether never breaks. */
+    .rail-mini-item::after {
+      content: "";
+      position: absolute;
+      left: 50%;
+      bottom: -5px;
+      width: 1px;
+      height: 5px;
+      background: var(--line-strong);
+      transition: height 240ms ease,
+                  background-color 240ms ease;
+    }
+
+    .rail-mini .is-mid {
+      transform: translateY(-2px);
+      border-color: var(--line-strong);
+    }
+
+    .rail-mini .is-mid::after {
+      height: 7px;
+      background: var(--ink);
+    }
+
+    /* The handoff: the resting selection drops back as the next panel
+       takes the lift, both on the exhibit's own 240ms clock. */
+    .component-card:hover .rail-mini .is-mid,
+    .component-card:focus-visible .rail-mini .is-mid {
+      transform: none;
+      border-color: var(--line);
+    }
+
+    .component-card:hover .rail-mini .is-mid::after,
+    .component-card:focus-visible .rail-mini .is-mid::after {
+      height: 5px;
+      background: var(--line-strong);
+    }
+
+    .component-card:hover .rail-mini-item:nth-child(4),
+    .component-card:focus-visible .rail-mini-item:nth-child(4) {
+      transform: translateY(-2px);
+      border-color: var(--line-strong);
+    }
+
+    .component-card:hover .rail-mini-item:nth-child(4)::after,
+    .component-card:focus-visible .rail-mini-item:nth-child(4)::after {
+      height: 7px;
+      background: var(--ink);
+    }
+
+    /* The exhibit's six paint roles, so the artworks dress themselves.
+       Strokes carry vector-effect in the markup and stay hairline at
+       this scale; fills shrink with the panels, thinning the halftone
+       and waveform into texture — which is what a preview of a preview
+       should be. */
+    .rail-mini svg {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    .rail-mini svg .hair   { stroke: var(--line-strong); stroke-width: 1; }
+    .rail-mini svg .mute   { stroke: var(--ink-muted);   stroke-width: 1; }
+    .rail-mini svg .ink    { stroke: var(--ink); }
+    .rail-mini svg .solid  { fill: var(--ink); }
+    .rail-mini svg .soft   { fill: var(--ink-muted); }
+    .rail-mini svg .accent { fill: var(--accent); }
+
+    .rail-mini svg :where(.hair, .mute, .ink) {
+      fill: none;
+    }
   </style>
 </head>
 <body>
@@ -102,7 +479,7 @@
           </div>
         </a>
 
-        <a class="component-card" href="animations/sun-moon/index.html">
+        <a class="component-card sky-card" href="animations/sun-moon/index.html">
           <span class="card-tag"><span class="card-tag-rainbow">interactive</span></span>
           <div class="card-preview" aria-hidden="true">
             <!-- A live miniature of the specimen, not a still: the same
@@ -139,6 +516,150 @@
                  them off data-theme) — the card tells the truth about
                  which way the morph will run from the current sky. -->
             <p class="card-name"><span class="sky-name-day">Sun to moon</span><span class="sky-name-night">Moon to sun</span></p>
+          </div>
+        </a>
+
+        <a class="component-card" href="animations/segmented-control/index.html">
+          <div class="card-preview" aria-hidden="true">
+            <!-- A live miniature of the specimen, like the sun-moon
+                 card's sky: the exhibit's real resting pose (thumb on
+                 the middle preset), sliding on card hover. pointer-events
+                 on the preview are none, so it stays scenery — the whole
+                 card is the link. -->
+            <span class="seg-mini">
+              <span class="seg-mini-thumb"></span>
+              <span class="seg-mini-option">soft</span>
+              <span class="seg-mini-option is-on">snappy</span>
+              <span class="seg-mini-option">bouncy</span>
+            </span>
+          </div>
+          <div class="card-body">
+            <p class="card-name">Segmented control</p>
+          </div>
+        </a>
+
+        <a class="component-card" href="animations/inertia-preview-rail/index.html">
+          <div class="card-preview" aria-hidden="true">
+            <!-- A live miniature of the specimen: six of the exhibit's
+                 real artworks on the real strip anatomy (hairline,
+                 stems, the lifted selection), sliding one preview over
+                 on card hover. The styles live in the block above. -->
+            <span class="rail-mini">
+              <span class="rail-mini-track">
+                <span class="rail-mini-item">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <g class="solid">
+                      <circle cx="16" cy="22" r="1.2"/><circle cx="28" cy="22" r="1.7"/>
+                      <circle cx="40" cy="22" r="2.2"/><circle cx="52" cy="22" r="2.7"/>
+                      <circle cx="64" cy="22" r="3.2"/><circle cx="76" cy="22" r="3.7"/>
+                      <circle cx="88" cy="22" r="4.2"/>
+                      <circle cx="16" cy="36" r="1.2"/><circle cx="28" cy="36" r="1.7"/>
+                      <circle cx="40" cy="36" r="2.2"/><circle cx="52" cy="36" r="2.7"/>
+                      <circle cx="64" cy="36" r="3.2"/><circle cx="76" cy="36" r="3.7"/>
+                      <circle cx="88" cy="36" r="4.2"/>
+                      <circle cx="16" cy="50" r="1.2"/><circle cx="28" cy="50" r="1.7"/>
+                      <circle cx="40" cy="50" r="2.2"/><circle cx="52" cy="50" r="2.7"/>
+                      <circle cx="64" cy="50" r="3.2"/><circle cx="76" cy="50" r="3.7"/>
+                      <circle cx="88" cy="50" r="4.2"/>
+                      <circle cx="16" cy="64" r="1.2"/><circle cx="28" cy="64" r="1.7"/>
+                      <circle cx="40" cy="64" r="2.2"/><circle cx="52" cy="64" r="2.7"/>
+                      <circle cx="64" cy="64" r="3.2"/><circle cx="76" cy="64" r="3.7"/>
+                      <circle cx="88" cy="64" r="4.2"/>
+                      <circle cx="16" cy="78" r="1.2"/><circle cx="28" cy="78" r="1.7"/>
+                      <circle cx="40" cy="78" r="2.2"/><circle cx="52" cy="78" r="2.7"/>
+                      <circle cx="64" cy="78" r="3.2"/><circle cx="76" cy="78" r="3.7"/>
+                      <circle cx="88" cy="78" r="4.2"/>
+                      <circle cx="16" cy="92" r="1.2"/><circle cx="28" cy="92" r="1.7"/>
+                      <circle cx="40" cy="92" r="2.2"/><circle cx="52" cy="92" r="2.7"/>
+                      <circle cx="64" cy="92" r="3.2"/><circle cx="76" cy="92" r="3.7"/>
+                      <circle cx="88" cy="92" r="4.2"/>
+                      <circle cx="16" cy="106" r="1.2"/><circle cx="28" cy="106" r="1.7"/>
+                      <circle cx="40" cy="106" r="2.2"/><circle cx="52" cy="106" r="2.7"/>
+                      <circle cx="64" cy="106" r="3.2"/><circle cx="76" cy="106" r="3.7"/>
+                      <circle cx="88" cy="106" r="4.2"/>
+                    </g>
+                  </svg>
+                </span>
+                <span class="rail-mini-item">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <path class="hair" d="M 33.7 43.6 A 18 18 0 0 1 66.3 43.6"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="hair" d="M 22.8 48.7 A 30 30 0 0 1 77.2 48.7"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="hair" d="M 11.9 53.7 A 42 42 0 0 1 88.1 53.7"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="mute" d="M 50 36 L 50 80" stroke-dasharray="2 4"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="ink" d="M 50 36 L 74.1 70.4" stroke-width="1.5"
+                          vector-effect="non-scaling-stroke"/>
+                    <circle class="solid" cx="74.1" cy="70.4" r="6"/>
+                    <circle class="solid" cx="50" cy="36" r="2.5"/>
+                  </svg>
+                </span>
+                <span class="rail-mini-item is-mid">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <path class="ink" stroke-width="1.5"
+                          d="M 10 62 C 17.3 46 22.7 46 30 62 C 37.3 78 42.7 78 50 62
+                             C 57.3 46 62.7 46 70 62 C 77.3 78 82.7 78 90 62"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="mute"
+                          d="M 10 62 C 17.3 72 22.7 72 30 62 C 37.3 52 42.7 52 50 62
+                             C 57.3 72 62.7 72 70 62 C 77.3 52 82.7 52 90 62"
+                          vector-effect="non-scaling-stroke"/>
+                    <circle class="solid" cx="30" cy="62" r="2"/>
+                    <circle class="solid" cx="50" cy="62" r="2"/>
+                    <circle class="solid" cx="70" cy="62" r="2"/>
+                  </svg>
+                </span>
+                <span class="rail-mini-item">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <circle class="hair" cx="50" cy="62" r="34"
+                            vector-effect="non-scaling-stroke"/>
+                    <circle class="mute" cx="50" cy="62" r="20" stroke-dasharray="1.5 4"
+                            vector-effect="non-scaling-stroke"/>
+                    <path class="ink" stroke-width="2.5"
+                          d="M 61.6 30.1 A 34 34 0 0 1 83.5 56.1"
+                          vector-effect="non-scaling-stroke"/>
+                    <rect class="accent" x="74.9" y="39.5" width="6" height="6"/>
+                    <path class="hair" d="M 50 56 L 50 68 M 44 62 L 56 62"
+                          vector-effect="non-scaling-stroke"/>
+                    <circle class="solid" cx="50" cy="62" r="1.5"/>
+                  </svg>
+                </span>
+                <span class="rail-mini-item">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <path class="hair" d="M 10 66 L 90 66"
+                          vector-effect="non-scaling-stroke"/>
+                    <rect class="soft"  x="13.5" y="60" width="5" height="12"/>
+                    <rect class="solid" x="22"   y="53" width="5" height="26"/>
+                    <rect class="soft"  x="30.5" y="57" width="5" height="18"/>
+                    <rect class="solid" x="39"   y="44" width="5" height="44"/>
+                    <rect class="accent" x="47.5" y="35" width="5" height="62"/>
+                    <rect class="solid" x="56"   y="49" width="5" height="34"/>
+                    <rect class="soft"  x="64.5" y="42" width="5" height="48"/>
+                    <rect class="solid" x="73"   y="56" width="5" height="20"/>
+                    <rect class="soft"  x="81.5" y="51" width="5" height="30"/>
+                  </svg>
+                </span>
+                <span class="rail-mini-item">
+                  <svg viewBox="0 0 100 125" aria-hidden="true">
+                    <path class="hair" d="M 14 98 L 90 98"
+                          vector-effect="non-scaling-stroke"/>
+                    <rect class="solid" x="22" y="34" width="26" height="64"/>
+                    <rect class="hair" x="56" y="50" width="30" height="30"
+                          stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+                    <path class="hair" d="M 48 66 L 56 66"
+                          vector-effect="non-scaling-stroke"/>
+                    <path class="mute" d="M 71 80 L 71 98" stroke-dasharray="2 3"
+                          vector-effect="non-scaling-stroke"/>
+                    <circle class="soft" cx="86" cy="50" r="1.5"/>
+                  </svg>
+                </span>
+              </span>
+            </span>
+          </div>
+          <div class="card-body">
+            <p class="card-name">Inertia preview rail</p>
           </div>
         </a>
 
