@@ -528,29 +528,46 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
-/* A quiet way back home from a component page. Pinned to the top-left
-   corner and styled like the rest of the chrome (mono, muted) — visible
-   when you look for it, invisible when you don't. */
-.back-link {
+/* The exhibit pages' corner chrome, one treatment for both corners:
+   the back link home (top-left) and the copy-code link (top-right —
+   a link to the exhibit's standalone snippet, code.html, that
+   scripts/copy-code.js upgrades into a clipboard button; anchored to
+   the RIGHT edge so the swap to the shorter word "copied" grows from
+   a still corner). Mono, muted, visible when you look for it. */
+.back-link,
+.copy-code {
   position: fixed;
   top: var(--space-5);
-  left: var(--space-5);
   font-family: var(--font-mono);
-  font-size: var(--text-xs);
   color: var(--ink-muted);
   text-decoration: none;
   transition: color var(--speed-color) ease;
 }
 
-/* One line of 13px mono is a ~21px-tall target. The halo brings it to
-   ~44px each way; the corner around it is empty, so it overlaps nothing. */
-.back-link::after {
+.back-link {
+  left: var(--space-5);
+  font-size: var(--text-xs);
+}
+
+.copy-code {
+  right: var(--space-5);
+  /* a step below the back link: an exit sign matters more than an
+     extra — the corner chrome should whisper, quietest voice last */
+  font-size: var(--text-2xs);
+}
+
+/* One line of small mono is a ~21px-tall target. The halo brings it to
+   ~44px each way; the corners around them are empty, so it overlaps
+   nothing. */
+.back-link::after,
+.copy-code::after {
   content: "";
   position: absolute;
   inset: -12px;
 }
 
-.back-link:hover {
+.back-link:hover,
+.copy-code:hover {
   color: var(--ink);
 }
 
@@ -654,6 +671,8 @@ a:focus-visible {
 }
 
 .component-card {
+  --lift: 2px; /* how high hover picks the card up — the flap below matches */
+
   display: block;
   position: relative; /* anchors the optional corner tag */
   background: var(--surface);
@@ -662,14 +681,29 @@ a:focus-visible {
   box-shadow: var(--shadow-sm);
   text-decoration: none;
   color: var(--ink);
-  overflow: hidden; /* clips the preview's dot grid to the rounded corners */
+  /* no overflow: hidden here — the hover flap below must poke past the
+     card's box, so the corner cropping lives on .card-preview instead */
   transition: box-shadow var(--speed-color) ease,
               transform var(--speed-move) ease;
 }
 
 .component-card:hover {
   box-shadow: var(--shadow-md);
-  transform: translateY(-2px); /* a gentle lift — the card is pickable */
+  transform: translateY(calc(-1 * var(--lift))); /* a gentle lift — the
+                                                    card is pickable */
+}
+
+/* The lift moves the card's hit box up with it, so a cursor resting on
+   the bottom couple of pixels finds itself OUTSIDE the risen card —
+   hover ends, the card drops back onto the cursor, hover begins again:
+   a flicker oscillator pinned to the bottom edge. This invisible flap
+   exists only while hovered and hangs exactly the lift's height below
+   the box, so the strip the card vacates still counts as the card and
+   the hover holds until the cursor truly leaves. */
+.component-card:hover::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 calc(-1 * var(--lift));
 }
 
 .component-card:focus-visible {
@@ -749,6 +783,12 @@ a:focus-visible {
   /* A miniature stage inside the card. pointer-events: none so the
      preview buttons are scenery, not controls — the whole card is the link. */
   position: relative; /* anchors the dot-grid layer below */
+  /* The stage crops its own square-cornered layers — the dot grid and
+     the sky-card's traveling sky — since the card itself no longer
+     clips (its hover flap has to overhang). Top corners only, and one
+     border-width tighter than the card's for a concentric fit. */
+  border-radius: calc(var(--radius-lg) - 1px) calc(var(--radius-lg) - 1px) 0 0;
+  overflow: hidden;
   border-bottom: 1px solid var(--line);
   padding: var(--space-5);
   display: flex;

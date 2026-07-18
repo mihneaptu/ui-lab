@@ -36,12 +36,28 @@
      ------------------------------------------------------------------ */
 
   --paper: #f4f4f3;        /* page background — a soft neutral, not stark white */
-  --surface: #ffffff;      /* cards and specimen stages sit on pure white,
-                              so they read as "raised" above the paper */
-  --ink: #1a1a1a;          /* main text — near-black. Pure #000 on light
-                              backgrounds is harsher than it needs to be */
-  --ink-muted: #6b6b6b;    /* secondary text — still passes contrast on paper */
-  --line: #e4e4e2;         /* hairline borders and the dot grid */
+
+  /* surface, both inks, and line also exist as FIXED aliases (-light /
+     -dark) that never flip with the theme — the same pattern as the
+     fixed shadow aliases below. One customer so far: the homepage
+     sun-moon card, whose preview stage dresses in the OPPOSITE sky on
+     hover so the morph it promises plays under its own light. */
+  --surface-light: #ffffff;  /* cards and specimen stages sit on pure white,
+                                so they read as "raised" above the paper */
+  --surface-dark: #1c1c1c;   /* in the dark, "raised" means "catches more
+                                light": cards sit lighter than the paper */
+  --ink-light: #1a1a1a;      /* main text — near-black. Pure #000 on light
+                                backgrounds is harsher than it needs to be */
+  --ink-dark: #f2f2f2;       /* near-white — pure #fff glows harshly on dark */
+  --ink-muted-light: #6b6b6b; /* secondary text — still passes contrast on paper */
+  --ink-muted-dark: #a3a3a3;
+  --line-light: #e4e4e2;     /* hairline borders and the dot grid */
+  --line-dark: #2a2a2a;
+
+  --surface: var(--surface-light);
+  --ink: var(--ink-light);
+  --ink-muted: var(--ink-muted-light);
+  --line: var(--line-light);
   --line-strong: #b0b0ad;  /* borders that must be clearly visible
                               (e.g. the secondary button outline) */
 
@@ -116,6 +132,10 @@
   /* Type scale — each step is meaningfully bigger than the last.
      If two sizes are only 1px apart, readers can't tell them apart,
      so the difference communicates nothing. */
+  --text-2xs: 0.6875rem;  /* 11px — corner chrome that should whisper
+                             (the exhibit pages' copy-code link). The
+                             floor of the scale: anything below this
+                             stops being comfortably readable. */
   --text-xs: 0.8125rem;   /* 13px — annotations, chips */
   --text-sm: 0.9375rem;   /* 15px — secondary text */
   --text-md: 1.0625rem;   /* 17px — body */
@@ -176,12 +196,12 @@
 
   --paper: #121212;        /* the page floor — dark, but not pure black,
                               so shadows and lifted surfaces still register */
-  --surface: #1c1c1c;      /* cards sit slightly lighter than the paper —
-                              in the dark, "raised" means "catches more light" */
-  --ink: #f2f2f2;          /* near-white text — pure #fff glows harshly
-                              on dark backgrounds */
-  --ink-muted: #a3a3a3;
-  --line: #2a2a2a;
+  /* The hex values (and the reasoning behind them) live with the fixed
+     -light / -dark aliases in :root; this block only picks sides. */
+  --surface: var(--surface-dark);
+  --ink: var(--ink-dark);
+  --ink-muted: var(--ink-muted-dark);
+  --line: var(--line-dark);
   --line-strong: #4d4d4d;
 
   /* The accent ramp, mirrored: light resting state, dimmer as pressed. */

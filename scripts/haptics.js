@@ -133,4 +133,11 @@
       buzz(patterns.theme);
     }
   });
+
+  /* Some exhibits commit on moments no click can hear — the segmented
+     control's flung thumb picks its segment at pointerup, and a grab
+     has no click at all. Those call this hook from their own scripts;
+     the reduced-motion check and the iOS fallback above still govern
+     what comes out, and callers stay on the same 6/12/25 tiers. */
+  window.labBuzz = buzz;
 })();
